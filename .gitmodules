@@ -1,0 +1,3 @@
+[submodule "build/web"]
+	path = build/web
+	url = git@github.com:guilhermepata/rhythm_app_web.git
