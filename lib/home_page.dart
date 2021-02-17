@@ -1,13 +1,7 @@
-import 'dart:ffi';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'exercise_page.dart';
-import 'package:percent_indicator/percent_indicator.dart';
-import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:animations/animations.dart';
-import 'play_page.dart';
-import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:provider/provider.dart' as provider;
 import 'classes.dart';
 import 'widgets.dart';

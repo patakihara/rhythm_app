@@ -1,16 +1,10 @@
-import 'dart:ffi';
-
-import 'package:provider/provider.dart';
 import 'package:flutter/material.dart';
 import 'classes.dart';
 import 'home_page.dart';
 // import 'package:audioplayers/audio_cache.dart';
 // import 'package:sounds/sounds.dart';
 import 'dart:async';
-import 'package:audio_service/audio_service.dart';
-import 'main.dart';
 import 'package:flutter_media_notification/flutter_media_notification.dart';
-import 'themes.dart';
 
 // class BackgroundPlayer extends BackgroundAudioTask {
 //   final NowPlaying nowPlaying;
