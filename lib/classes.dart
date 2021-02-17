@@ -465,6 +465,10 @@ class TimeCounter {
 
   void reset() {
     stopwatch.reset();
+    if (timer != null) timer.cancel();
+    timer = Timer(
+        Duration(microseconds: duration.inMicroseconds - _elapsedMicroseconds),
+        end);
   }
 
   void stop() {
