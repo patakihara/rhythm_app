@@ -73,9 +73,13 @@ class _PlanPageState extends State<PlanPage> with TickerProviderStateMixin {
   bool atTopOfList = true;
 
   double get maxExtent {
-    var initialHeight = MediaQuery.of(context).size.width -
+    var height1 = MediaQuery.of(context).size.height / 2 -
         56 -
         MediaQuery.of(context).viewPadding.top;
+    var height2 = MediaQuery.of(context).size.width -
+        56 -
+        MediaQuery.of(context).viewPadding.top;
+    var initialHeight = height1 > height2 ? height2 : height1;
     var minHeight = 96;
     var x = initialHeight - minHeight;
     // if (exercises.length < 5) {
@@ -396,9 +400,13 @@ class _PlanPageState extends State<PlanPage> with TickerProviderStateMixin {
     appBarHeightController.duration =
         provider.Provider.of<MenuProvider>(context).navBarTransitionDuration;
 
-    var initialHeight = MediaQuery.of(context).size.width -
+    var height1 = MediaQuery.of(context).size.height / 2 -
         56 -
         MediaQuery.of(context).viewPadding.top;
+    var height2 = MediaQuery.of(context).size.width -
+        56 -
+        MediaQuery.of(context).viewPadding.top;
+    var initialHeight = height1 > height2 ? height2 : height1;
 
     return WillPopScope(
       onWillPop: onBackPressed,
