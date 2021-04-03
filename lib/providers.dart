@@ -300,7 +300,7 @@ class MenuProvider extends ChangeNotifier {
   Menu _previousMenu;
   Plan _openPlan;
   Exercise _openExercise;
-  bool _showNavBar = false; //true;
+  bool _showNavBar = true;
   bool _inPlanPage = false;
   bool _inExercisePage = false;
   bool _appBarElevated = false;
@@ -344,7 +344,7 @@ class MenuProvider extends ChangeNotifier {
   double get navBarBarHeight => _navBarHeight;
 
   set navBarBarHeight(double value) {
-    _navBarHeight = 0; //value;
+    _navBarHeight = value;
     notifyListeners();
   }
 

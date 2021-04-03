@@ -48,8 +48,8 @@ class DiscardChangesDialog extends StatelessWidget {
   }
 }
 
-class AnimatedNavBar extends StatelessWidget {
-  const AnimatedNavBar({
+class AnimatedBottomBar extends StatelessWidget {
+  const AnimatedBottomBar({
     Key key,
     @required this.child,
   }) : super(key: key);

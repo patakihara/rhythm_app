@@ -663,7 +663,7 @@ class _PlanPageState extends State<PlanPage> with TickerProviderStateMixin {
               ),
             ),
             floatingActionButtonLocation: FloatingActionButtonLocation.endTop,
-            bottomNavigationBar: AnimatedNavBar(
+            bottomNavigationBar: AnimatedBottomBar(
               child: Column(children: [AnimatedPlayCard(progressOnTop: true)]),
             ),
           ),

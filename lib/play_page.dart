@@ -151,14 +151,17 @@ class _PlayPageState extends State<PlayPage>
                         Icons.stop,
                       ),
                       onPressed: () {
-                        Navigator.pop(context);
                         Timer(
-                            provider.Provider.of<MenuProvider>(context,
-                                    listen: false)
-                                .pageTransitionDuration,
-                            () => provider.Provider.of<NowPlaying>(context,
-                                    listen: false)
-                                .clear());
+                          provider.Provider.of<MenuProvider>(
+                            context,
+                            listen: false,
+                          ).pageTransitionDuration,
+                          () => provider.Provider.of<NowPlaying>(
+                            context,
+                            listen: false,
+                          ).clear(),
+                        );
+                        Navigator.pop(context);
                       }),
                 ],
                 leading: IconButton(
