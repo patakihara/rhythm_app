@@ -23,29 +23,58 @@ class LibraryManager<T extends Data> {
   }
 
   Future<void> fetchFile() async {
-    await getApplicationDocumentsDirectory().then((Directory directory) {
-      dir = directory;
-      jsonFile = File(dir.path + "/" + fileName);
-      print("Fetching file in LibraryManager<" + T.toString() + ">");
-      fileExists = jsonFile.existsSync();
-      if (fileExists) {
-        print("File exists!");
-        var jsonString = jsonFile.readAsStringSync();
-        print('JsonString: ' + jsonString);
-        var jsonMap = jsonDecode(jsonString);
-        var decodedMap = DataMap<T>.fromJson(jsonMap);
-        dataMap.addAll(decodedMap);
-        print('Map taken from file: ' + dataMap.toString());
-        if (library != null) {
-          if (T == Exercise)
-            library.getExercisesFromStorage();
-          else
-            library.getPlansFromStorage();
-        }
-      } else {
-        print("File does not exist!");
-      }
+    var getDirectory = getApplicationDocumentsDirectory();
+    getDirectory.onError((error, stackTrace) {
+      fetchDefault();
     });
+    getDirectory.then((Directory directory) async {
+      if (await directory.exists()) {
+        dir = directory;
+        jsonFile = File(dir.path + "/" + fileName);
+        print("Fetching file in LibraryManager<" + T.toString() + ">");
+        fileExists = jsonFile.existsSync();
+        if (fileExists) {
+          print("File exists!");
+          var jsonString = jsonFile.readAsStringSync();
+          print('JsonString: ' + jsonString);
+          var jsonMap = jsonDecode(jsonString);
+          var decodedMap = DataMap<T>.fromJson(jsonMap);
+          dataMap.addAll(decodedMap);
+          print('Map taken from file: ' + dataMap.toString());
+          if (library != null) {
+            if (T == Exercise)
+              library.getExercisesFromStorage();
+            else
+              library.getPlansFromStorage();
+          }
+          return;
+        }
+      }
+      fetchDefault();
+    });
+  }
+
+  void fetchDefault() {
+    print("File or directory does not exist!");
+    if (T == Exercise) {
+      var objects = <Exercise>[];
+      objects.add(Exercise(name: 'Sit ups'));
+      objects.add(Exercise(name: 'Biceps curl'));
+      objects.add(Exercise(name: 'Pull ups'));
+      objects.add(Exercise(name: 'Squats'));
+      var decodedMap = DataMap<Exercise>.fromObjects(objects);
+      dataMap.addAll(decodedMap);
+      library.getExercisesFromStorage();
+    } else if (T == Plan) {
+      var objects = <Plan>[];
+      objects.add(Plan.fromList(
+          'Upper body 1', <String>['Pull ups', 'Sit ups', 'Biceps curl']));
+      objects.add(Plan.fromList(
+          'Lower body 1', <String>['Pull ups', 'Sit ups', 'Squats']));
+      var decodedMap = DataMap<Plan>.fromObjects(objects);
+      dataMap.addAll(decodedMap);
+      library.getPlansFromStorage();
+    }
   }
 
   void createFile() {
