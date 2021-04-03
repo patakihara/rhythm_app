@@ -24,15 +24,15 @@ dependencies:
   flutter:
     sdk: flutter
 
-  percent_indicator: "^2.1.7+2"
-  material_design_icons_flutter: 4.0.5755
-  animations: ^1.0.0+5
-  flutter_speed_dial: ^1.2.5
-  provider: ^4.1.0
+  percent_indicator: ^3.0.1
+  material_design_icons_flutter: ^4.0.5955
+  animations: ^2.0.0
+  flutter_speed_dial: ^3.0.5
+  provider: ^5.0.0
   visibility_detector: ^0.1.5
-  timeline_tile: ^1.0.0
-  google_fonts: ^1.1.1
-  intl: ^0.16.1
+  timeline_tile: ^2.0.0
+  google_fonts: ^2.0.0
+  intl: ^0.17.0
   flutter_media_notification:
     git: 
       url: https://github.com/guilhermepata/flutter_media_notification.git
@@ -40,9 +40,9 @@ dependencies:
   # audioplayers: ^0.16.2 #works, but sometimes audio stops
   # audioplayer: ^0.8.1 #hasn't worked yet
   # sounds: ^0.9.3 #hasn't worked yet
-  just_audio: ^0.5.5 #works fucking perfectly
-  audio_session: ^0.0.9
-  audio_service: ^0.15.2 #didn't work, seems too complicated
+  just_audio: ^0.7.3 #works fucking perfectly
+  audio_session: ^0.1.0
+  audio_service: ^0.17.0 #didn't work, seems too complicated
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -74,6 +74,7 @@ flutter:
     - assets/hero_decorative-celebration-01.wav
     - assets/notification_decorative-01.wav
     - assets/notification_high-intensity.wav
+    - assets/silence.mp3
     - google_fonts/
 
   # An image asset can refer to one or more resolution-specific "variants", see
