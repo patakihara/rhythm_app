@@ -714,8 +714,8 @@ class Metronome implements SoundTicker {
 
   void setUpPlayers() async {
     if (!_playersSetUp) {
-      await audioPlayer1.setAsset('assets/woodblock.mp3');
-      await audioPlayer2.setAsset('assets/drumsticks.mp3');
+      await audioPlayer1.setAsset('assets/notification_high-intensity.wav');
+      await audioPlayer2.setAsset('assets/notification_decorative-01.wav');
       await audioPlayerFinish.setAsset('assets/hero_simple-celebration-03.wav');
       await audioPlayer1.setVolume(3);
       await audioPlayer2.setVolume(3);
