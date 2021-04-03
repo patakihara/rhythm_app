@@ -74,6 +74,8 @@ flutter:
     - assets/hero_decorative-celebration-01.wav
     - assets/notification_decorative-01.wav
     - assets/notification_high-intensity.wav
+    - assets/silence.mp3
+    - assets/whitenoise2.mp3
     - google_fonts/
 
   # An image asset can refer to one or more resolution-specific "variants", see

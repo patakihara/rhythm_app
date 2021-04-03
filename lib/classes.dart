@@ -709,15 +709,18 @@ class Metronome implements SoundTicker {
   final audioPlayer1 = AudioPlayer(handleInterruptions: true);
   final audioPlayer2 = AudioPlayer(handleInterruptions: true);
   final audioPlayerFinish = AudioPlayer(handleInterruptions: true);
+  final audioPlayerSilence = AudioPlayer(handleInterruptions: false);
 
   void setUpPlayers() async {
     if (!_playersSetUp) {
       await audioPlayer1.setAsset('assets/woodblock.mp3');
       await audioPlayer2.setAsset('assets/drumsticks.mp3');
       await audioPlayerFinish.setAsset('assets/hero_simple-celebration-03.wav');
+      await audioPlayerSilence.setAsset('assets/whitenoise2.mp3');
       await audioPlayer1.setVolume(3);
       await audioPlayer2.setVolume(3);
       await audioPlayerFinish.setVolume(3);
+      await audioPlayerSilence.setVolume(0.1);
       _playersSetUp = true;
     }
   }
@@ -734,6 +737,7 @@ class Metronome implements SoundTicker {
     var time = stopwatch.elapsedMicroseconds / 1000000;
     time = time % (dur1 + dur2);
     stopwatch.start();
+    audioPlayerSilence.play();
     if (time == 0) {
       _beat2();
     }
@@ -748,6 +752,7 @@ class Metronome implements SoundTicker {
     if (timer1 != null) timer1.cancel();
     if (timer2 != null) timer2.cancel();
     stopwatch.stop();
+    audioPlayerSilence.stop2();
     running = false;
     await AudioSession.instance
         .then((session) async => await session.setActive(false));
@@ -758,6 +763,7 @@ class Metronome implements SoundTicker {
     if (timer1 != null) timer1.cancel();
     if (timer2 != null) timer2.cancel();
     stopwatch.reset();
+    audioPlayerSilence.seek(Duration(microseconds: 0));
     _currentCycle = 0;
     beatReset();
     print('Metronome reset');
@@ -813,7 +819,7 @@ class Metronome implements SoundTicker {
     print('beat1');
     // if using just_audio
     audioPlayer1.seek(Duration(microseconds: 0));
-    audioPlayer1.play().then((_) => audioPlayer1.stop());
+    audioPlayer1.play().then((_) => audioPlayer1.stop2());
     // // if using sounds
     // QuickPlay.fromTrack(tick1);
     beat1();
@@ -823,7 +829,7 @@ class Metronome implements SoundTicker {
     print('beat2');
     // if usign just audio
     audioPlayer2.seek(Duration(microseconds: 0));
-    audioPlayer2.play().then((_) => audioPlayer2.stop());
+    audioPlayer2.play().then((_) => audioPlayer2.stop2());
     // // if using sounds
     // QuickPlay.fromTrack(tick2);
     beat2();
