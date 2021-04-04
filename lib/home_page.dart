@@ -143,14 +143,15 @@ class _HomePageState extends State<HomePage> {
                   child: menuProvider.menuWidget,
                 ),
               ),
-              bottomNavigationBar: AnimatedBottomBar(
-                child: Column(
-                  children: [
-                    AnimatedPlayCard(),
-                    buildBottomNavigationBar(context),
-                  ],
-                ),
-              ),
+              bottomNavigationBar: AnimatedPlayCard(),
+              // bottomNavigationBar: AnimatedBottomBar(
+              //   child: Column(
+              //     children: [
+              //       AnimatedPlayCard(),
+              //       buildBottomNavigationBar(context),
+              //     ],
+              //   ),
+              // ),
             ));
   }
 
