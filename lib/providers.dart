@@ -304,7 +304,7 @@ class MenuProvider extends ChangeNotifier {
   bool _inPlanPage = false;
   bool _inExercisePage = false;
   bool _appBarElevated = false;
-  double _playCardHeight = 64;
+  double _playCardHeight = 72;
   double _navBarHeight = 56;
 
   final Duration pageTransitionDuration = Duration(milliseconds: 300);

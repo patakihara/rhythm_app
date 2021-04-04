@@ -456,9 +456,10 @@ class _ExercisePageState extends State<ExercisePage> {
           ),
         ),
         floatingActionButtonLocation: FloatingActionButtonLocation.endTop,
-        bottomNavigationBar: AnimatedBottomBar(
-          child: Column(children: [AnimatedPlayCard(progressOnTop: true)]),
-        ),
+        bottomNavigationBar: AnimatedPlayCard(),
+        // bottomNavigationBar: AnimatedBottomBar(
+        //   child: Column(children: [AnimatedPlayCard(progressOnTop: true)]),
+        // ),
       ),
     );
   }

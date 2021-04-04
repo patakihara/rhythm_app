@@ -518,7 +518,7 @@ class _PlanPageState extends State<PlanPage> with TickerProviderStateMixin {
                                       .indexOf(plan.name) +
                                   1)
                               .toString() +
-                          '.jpg',
+                          '.jpeg',
                       height: initialHeight - extent + 56,
                       width: MediaQuery.of(context).size.width,
                       fit: BoxFit.cover,
@@ -700,7 +700,7 @@ class _PlanPageState extends State<PlanPage> with TickerProviderStateMixin {
               ),
             ),
             floatingActionButtonLocation: FloatingActionButtonLocation.endTop,
-            bottomSheet: AnimatedPlayCard(),
+            bottomNavigationBar: AnimatedPlayCard(),
             // bottomNavigationBar: AnimatedBottomBar(
             //   child: Column(children: [AnimatedPlayCard(progressOnTop: true)]),
             // ),

@@ -290,7 +290,7 @@ class _TimersMenuState extends State<TimersMenu> with TickerProviderStateMixin {
         plan: plans[i],
         width: side,
         height: side,
-        image: 'images/jpeg/image' + (i + 1).toString() + '.jpg',
+        image: 'images/jpeg/image' + (i + 1).toString() + '.jpeg',
         onTap: () async {
           await onTap(i);
           return;

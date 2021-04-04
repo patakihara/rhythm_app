@@ -633,6 +633,10 @@ class HeroTimerIndicator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Hero(
+      transitionOnUserGestures: true,
+      createRectTween: (rect1, rect2) {
+        return RectTween(begin: rect1, end: rect2);
+      },
       tag: 'timerIndicator',
       child: TimerIndicator(
         isSmall: isSmall,
@@ -685,12 +689,10 @@ class _TimerIndicatorState extends State<TimerIndicator> {
     super.initState();
     if (widget.animation != null)
       widget.animation.addListener(() {
-        setState(() {
-          if (widget.isSmall)
+        if (mounted)
+          setState(() {
             value = widget.animation.value;
-          else
-            value = 1 - widget.animation.value;
-        });
+          });
       });
     else {
       if (widget.isSmall)
@@ -699,6 +701,16 @@ class _TimerIndicatorState extends State<TimerIndicator> {
         value = 1.0;
     }
   }
+
+  // @override
+  // void dispose() {
+  //   widget.animation.removeListener(() {
+  //     setState(() {
+  //       value = widget.animation.value;
+  //     });
+  //   });
+  //   super.dispose();
+  // }
 
   double interpolate(double start, double end) {
     return (end - start) * value + start;
@@ -717,7 +729,7 @@ class _TimerIndicatorState extends State<TimerIndicator> {
             : CrossFadeState.showSecond,
         firstChild: CircularPercentIndicator(
           curve: Curves.fastOutSlowIn,
-          animation: !nowPlaying.playing,
+          animation: false, //!nowPlaying.playing,
           animationDuration: animationDuration,
           animateFromLastPercent: true,
           radius: interpolate(
@@ -737,7 +749,7 @@ class _TimerIndicatorState extends State<TimerIndicator> {
               Theme.of(context).colorScheme.onBackground.withAlpha(40),
           center: CircularPercentIndicator(
             curve: Curves.fastOutSlowIn,
-            animation: !nowPlaying.playing,
+            animation: false, //!nowPlaying.playing,
             animationDuration: animationDuration,
             animateFromLastPercent: true,
             radius: interpolate(
@@ -771,7 +783,7 @@ class _TimerIndicatorState extends State<TimerIndicator> {
                     Padding(
                       padding: const EdgeInsets.all(4.0),
                       child: Text(nowPlaying.inReady ? 'Ready' : 'Rest',
-                          overflow: TextOverflow.fade,
+                          overflow: TextOverflow.clip,
                           style: Theme.of(context)
                               .textTheme
                               .headline2
@@ -784,7 +796,7 @@ class _TimerIndicatorState extends State<TimerIndicator> {
                     ),
                     !nowPlaying.inEnd
                         ? Text(nowPlaying.currentSet.cardinal() + ' set',
-                            overflow: TextOverflow.fade,
+                            overflow: TextOverflow.clip,
                             style: Theme.of(context).textTheme.subtitle2.apply(
                                 color: Theme.of(context).accentColor,
                                 fontWeightDelta: 2))
@@ -851,7 +863,7 @@ class _TimerIndicatorState extends State<TimerIndicator> {
                         nowPlaying.inSet
                             ? nowPlaying.currentRep.pluralString('rep')
                             : 'Done',
-                        overflow: TextOverflow.fade,
+                        overflow: TextOverflow.clip,
                         style: Theme.of(context)
                             .textTheme
                             .headline2
@@ -866,7 +878,7 @@ class _TimerIndicatorState extends State<TimerIndicator> {
                         !nowPlaying.inEnd
                             ? nowPlaying.currentSet.cardinal() + ' set'
                             : nowPlaying.currentSet.pluralString('set'),
-                        overflow: TextOverflow.fade,
+                        overflow: TextOverflow.clip,
                         style: Theme.of(context).textTheme.subtitle2.apply(
                             color: Theme.of(context).accentColor,
                             fontWeightDelta: 2)),
