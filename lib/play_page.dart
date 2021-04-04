@@ -183,7 +183,9 @@ class _PlayPageState extends State<PlayPage>
                         child: Center(
                       child: SingleChildScrollView(
                         physics: ClampingScrollPhysics(),
-                        child: TimerIndicator(),
+                        child: HeroTimerIndicator(
+                          isSmall: false,
+                        ),
                       ),
                     )),
                     Container(

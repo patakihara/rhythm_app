@@ -498,7 +498,9 @@ class _PlayCardState extends State<PlayCard>
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          SmallTimerIndicator(),
+                          HeroTimerIndicator(
+                            isSmall: true,
+                          ),
                           Padding(
                             padding:
                                 const EdgeInsets.only(left: 16.0, right: 8),
@@ -639,238 +641,257 @@ class _PlayCardState extends State<PlayCard>
   }
 }
 
-class TimerIndicator extends StatelessWidget {
-  const TimerIndicator({
+class HeroTimerIndicator extends StatelessWidget {
+  const HeroTimerIndicator({
     Key key,
+    this.isSmall = true,
   }) : super(key: key);
+
+  final bool isSmall;
 
   @override
   Widget build(BuildContext context) {
-    return provider.Consumer<NowPlaying>(
-      builder: (context, nowPlaying, child) => Column(
-        children: [
-          Column(
-            children: [
-              Hero(
-                tag: 'timerIndicator',
-                child: AnimatedCrossFade(
-                  duration: Duration(milliseconds: 300),
-                  firstCurve: Curves.fastOutSlowIn,
-                  sizeCurve: Curves.fastOutSlowIn,
-                  secondCurve: Curves.fastOutSlowIn,
-                  crossFadeState: !nowPlaying.inSet && !nowPlaying.inEnd
-                      ? CrossFadeState.showFirst
-                      : CrossFadeState.showSecond,
-                  firstChild: CircularPercentIndicator(
-                    curve: Curves.fastOutSlowIn,
-                    animation: !nowPlaying.playing,
-                    animationDuration: 300,
-                    animateFromLastPercent: true,
-                    radius: 200.0,
-                    lineWidth: 12.0,
-                    circularStrokeCap: CircularStrokeCap.round,
-                    percent:
-                        !nowPlaying.inSet ? nowPlaying.setPerc.toDouble() : 0.0,
-                    progressColor: Color.alphaBlend(
-                        Theme.of(context)
-                            .colorScheme
-                            .onBackground
-                            .withOpacity(0.6),
-                        Theme.of(context).colorScheme.background),
-                    backgroundColor: Theme.of(context)
-                        .colorScheme
-                        .onBackground
-                        .withAlpha(40),
-                    center: CircularPercentIndicator(
-                      curve: Curves.fastOutSlowIn,
-                      animation: !nowPlaying.playing,
-                      animationDuration: 300,
-                      animateFromLastPercent: true,
-                      radius: 155.0,
-                      lineWidth: 12.0,
-                      circularStrokeCap: CircularStrokeCap.round,
-                      percent: nowPlaying.percent.toDouble(),
-                      progressColor: Theme.of(context).accentColor,
-                      backgroundColor:
-                          Theme.of(context).accentColor.withAlpha(30),
-                      center: Container(
-                        width: 90,
-                        height: 60,
-                        child: Column(
-                          mainAxisSize: MainAxisSize.max,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: <Widget>[
-                            Padding(
-                              padding: const EdgeInsets.all(4.0),
-                              child: Text(nowPlaying.inReady ? 'Ready' : 'Rest',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .headline2
-                                      .apply(
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onBackground,
-                                        fontSizeFactor: 0.4,
-                                      )
-                                      .copyWith(fontWeight: FontWeight.w600)),
-                            ),
-                            !nowPlaying.inEnd
-                                ? Text(
-                                    nowPlaying.currentSet.cardinal() + ' set',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .subtitle2
-                                        .apply(
-                                            color:
-                                                Theme.of(context).accentColor,
-                                            fontWeightDelta: 2))
-                                : SizedBox(height: 0),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  secondChild: CircularPercentIndicator(
-                    curve: Curves.fastOutSlowIn,
-                    animation: !nowPlaying.playing,
-                    animationDuration: 300,
-                    animateFromLastPercent: true,
-                    radius: 200.0,
-                    lineWidth: 12.0,
-                    circularStrokeCap: CircularStrokeCap.round,
-                    percent: nowPlaying.setPerc.toDouble(),
-                    progressColor: Theme.of(context).colorScheme.primary,
-                    backgroundColor:
-                        Theme.of(context).colorScheme.primary.withAlpha(40),
-                    center: CircularPercentIndicator(
-                      curve: Curves.fastOutSlowIn,
-                      animation: !nowPlaying.playing,
-                      animationDuration: 300,
-                      animateFromLastPercent: true,
-                      radius: 155.0,
-                      lineWidth: 12.0,
-                      circularStrokeCap: CircularStrokeCap.round,
-                      percent: nowPlaying.percent.toDouble(),
-                      progressColor: Theme.of(context).accentColor,
-                      backgroundColor:
-                          Theme.of(context).accentColor.withAlpha(40),
-                      center: Container(
-                        width: 90,
-                        height: 60,
-                        child: Column(
-                          mainAxisSize: MainAxisSize.max,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: <Widget>[
-                            Padding(
-                              padding: const EdgeInsets.all(4.0),
-                              child: Text(
-                                nowPlaying.inSet
-                                    ? nowPlaying.currentRep.pluralString('rep')
-                                    : 'Done',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .headline2
-                                    .apply(
-                                      color:
-                                          Theme.of(context).colorScheme.primary,
-                                      fontSizeFactor: 0.4,
-                                    )
-                                    .copyWith(fontWeight: FontWeight.w600),
-                              ),
-                            ),
-                            Text(
-                                !nowPlaying.inEnd
-                                    ? nowPlaying.currentSet.cardinal() + ' set'
-                                    : nowPlaying.currentSet.pluralString('set'),
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .subtitle2
-                                    .apply(
-                                        color: Theme.of(context).accentColor,
-                                        fontWeightDelta: 2)),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
+    return Hero(
+      tag: 'timerIndicator',
+      child: TimerIndicator(
+        isSmall: isSmall,
       ),
+      flightShuttleBuilder: (context, animation, arg1, arg2, arg3) {
+        return TimerIndicator(
+          animation: animation,
+          isSmall: isSmall,
+        );
+      },
     );
   }
 }
 
-class SmallTimerIndicator extends StatelessWidget {
-  const SmallTimerIndicator({
+class TimerIndicator extends StatefulWidget {
+  const TimerIndicator({
     Key key,
+    this.animation,
+    this.isSmall = true,
   }) : super(key: key);
+
+  final Animation<double> animation;
+  final bool isSmall;
+
+  @override
+  _TimerIndicatorState createState() => _TimerIndicatorState();
+}
+
+class _TimerIndicatorState extends State<TimerIndicator> {
+  final int animationDuration = 300;
+
+  final double maxOuterRadius = 200.0;
+  final double maxOuterLineWidth = 12.0;
+  final double maxInnerRadius = 155.0;
+  final double maxInnerLineWidth = 12.0;
+  final double maxContainerWidth = 90;
+  final double maxContainerHeight = 60;
+
+  final double minOuterRadius = 40.0;
+  final double minOuterLineWidth = 4.0;
+  final double minInnerRadius = 23.0;
+  final double minInnerLineWidth = 4.0;
+  final double minContainerWidth = 0;
+  final double minContainerHeight = 0;
+
+  double value;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.animation != null)
+      widget.animation.addListener(() {
+        setState(() {
+          if (widget.isSmall)
+            value = widget.animation.value;
+          else
+            value = 1 - widget.animation.value;
+        });
+      });
+    else {
+      if (widget.isSmall)
+        value = 0.0;
+      else
+        value = 1.0;
+    }
+  }
+
+  double interpolate(double start, double end) {
+    return (end - start) * value + start;
+  }
 
   @override
   Widget build(BuildContext context) {
     return provider.Consumer<NowPlaying>(
-      builder: (context, nowPlaying, child) => Hero(
-        tag: 'timerIndicator',
-        child: AnimatedCrossFade(
-          duration: Duration(milliseconds: 300),
-          firstCurve: Curves.fastOutSlowIn,
-          sizeCurve: Curves.fastOutSlowIn,
-          secondCurve: Curves.fastOutSlowIn,
-          crossFadeState: !nowPlaying.inSet
-              ? CrossFadeState.showFirst
-              : CrossFadeState.showSecond,
-          firstChild: CircularPercentIndicator(
+      builder: (context, nowPlaying, child) => AnimatedCrossFade(
+        duration: Duration(milliseconds: animationDuration),
+        firstCurve: Curves.fastOutSlowIn,
+        sizeCurve: Curves.fastOutSlowIn,
+        secondCurve: Curves.fastOutSlowIn,
+        crossFadeState: !nowPlaying.inSet && !nowPlaying.inEnd
+            ? CrossFadeState.showFirst
+            : CrossFadeState.showSecond,
+        firstChild: CircularPercentIndicator(
+          curve: Curves.fastOutSlowIn,
+          animation: !nowPlaying.playing,
+          animationDuration: animationDuration,
+          animateFromLastPercent: true,
+          radius: interpolate(
+            minOuterRadius,
+            maxOuterRadius,
+          ),
+          lineWidth: interpolate(
+            minOuterLineWidth,
+            maxOuterLineWidth,
+          ),
+          circularStrokeCap: CircularStrokeCap.round,
+          percent: !nowPlaying.inSet ? nowPlaying.setPerc.toDouble() : 0.0,
+          progressColor: Color.alphaBlend(
+              Theme.of(context).colorScheme.onBackground.withOpacity(0.6),
+              Theme.of(context).colorScheme.background),
+          backgroundColor:
+              Theme.of(context).colorScheme.onBackground.withAlpha(40),
+          center: CircularPercentIndicator(
             curve: Curves.fastOutSlowIn,
             animation: !nowPlaying.playing,
-            animationDuration: 300,
+            animationDuration: animationDuration,
             animateFromLastPercent: true,
-            radius: 40,
-            lineWidth: 4,
+            radius: interpolate(
+              minInnerRadius,
+              maxInnerRadius,
+            ),
+            lineWidth: interpolate(
+              minInnerLineWidth,
+              maxInnerLineWidth,
+            ),
             circularStrokeCap: CircularStrokeCap.round,
-            percent: !nowPlaying.inSet ? nowPlaying.setPerc.toDouble() : 0.0,
-            progressColor: Color.alphaBlend(
-                Theme.of(context).colorScheme.onBackground.withOpacity(0.6),
-                Theme.of(context).colorScheme.background),
-            backgroundColor:
-                Theme.of(context).colorScheme.onBackground.withAlpha(40),
-            center: CircularPercentIndicator(
-              // animation: !nowPlaying.playing,
-              // animationDuration: 600,
-              // animateFromLastPercent: !nowPlaying.playing,
-              radius: 23,
-              lineWidth: 4,
-              circularStrokeCap: CircularStrokeCap.round,
-              percent: nowPlaying.percent.toDouble(),
-              progressColor: Theme.of(context).accentColor,
-              backgroundColor: Theme.of(context).accentColor.withAlpha(30),
+            percent: nowPlaying.percent.toDouble(),
+            progressColor: Theme.of(context).accentColor,
+            backgroundColor: Theme.of(context).accentColor.withAlpha(30),
+            center: Opacity(
+              opacity: value,
+              child: Container(
+                width: interpolate(
+                  minContainerWidth,
+                  maxContainerWidth,
+                ),
+                height: interpolate(
+                  minContainerHeight,
+                  maxContainerHeight,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.max,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: <Widget>[
+                    Padding(
+                      padding: const EdgeInsets.all(4.0),
+                      child: Text(nowPlaying.inReady ? 'Ready' : 'Rest',
+                          overflow: TextOverflow.fade,
+                          style: Theme.of(context)
+                              .textTheme
+                              .headline2
+                              .apply(
+                                color:
+                                    Theme.of(context).colorScheme.onBackground,
+                                fontSizeFactor: 0.4,
+                              )
+                              .copyWith(fontWeight: FontWeight.w600)),
+                    ),
+                    !nowPlaying.inEnd
+                        ? Text(nowPlaying.currentSet.cardinal() + ' set',
+                            overflow: TextOverflow.fade,
+                            style: Theme.of(context).textTheme.subtitle2.apply(
+                                color: Theme.of(context).accentColor,
+                                fontWeightDelta: 2))
+                        : SizedBox(height: 0),
+                  ],
+                ),
+              ),
             ),
           ),
-          secondChild: CircularPercentIndicator(
+        ),
+        secondChild: CircularPercentIndicator(
+          curve: Curves.fastOutSlowIn,
+          animation: !nowPlaying.playing,
+          animationDuration: animationDuration,
+          animateFromLastPercent: true,
+          radius: interpolate(
+            minOuterRadius,
+            maxOuterRadius,
+          ),
+          lineWidth: interpolate(
+            minOuterLineWidth,
+            maxOuterLineWidth,
+          ),
+          circularStrokeCap: CircularStrokeCap.round,
+          percent: nowPlaying.setPerc.toDouble(),
+          progressColor: Theme.of(context).colorScheme.primary,
+          backgroundColor: Theme.of(context).colorScheme.primary.withAlpha(40),
+          center: CircularPercentIndicator(
             curve: Curves.fastOutSlowIn,
-            // animation: !nowPlaying.playing,
-            // animationDuration: 300,
-            // animateFromLastPercent: !nowPlaying.playing,
-            radius: 40,
-            lineWidth: 4,
+            animation: !nowPlaying.playing,
+            animationDuration: animationDuration,
+            animateFromLastPercent: true,
+            radius: interpolate(
+              minInnerRadius,
+              maxInnerRadius,
+            ),
+            lineWidth: interpolate(
+              minInnerLineWidth,
+              maxInnerLineWidth,
+            ),
             circularStrokeCap: CircularStrokeCap.round,
-            percent: nowPlaying.setPerc.toDouble(),
-            progressColor: Theme.of(context).colorScheme.primary,
-            backgroundColor:
-                Theme.of(context).colorScheme.primary.withAlpha(40),
-            center: CircularPercentIndicator(
-              // animation: !nowPlaying.playing,
-              // animationDuration: 600,
-              // animateFromLastPercent: !nowPlaying.playing,
-              radius: 23,
-              lineWidth: 4,
-              circularStrokeCap: CircularStrokeCap.round,
-              percent: nowPlaying.percent.toDouble(),
-              progressColor: Theme.of(context).accentColor,
-              backgroundColor: Theme.of(context).accentColor.withAlpha(40),
+            percent: nowPlaying.percent.toDouble(),
+            progressColor: Theme.of(context).accentColor,
+            backgroundColor: Theme.of(context).accentColor.withAlpha(40),
+            center: Opacity(
+              opacity: value,
+              child: Container(
+                width: interpolate(
+                  minContainerWidth,
+                  maxContainerWidth,
+                ),
+                height: interpolate(
+                  minContainerHeight,
+                  maxContainerHeight,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.max,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: <Widget>[
+                    Padding(
+                      padding: const EdgeInsets.all(4.0),
+                      child: Text(
+                        nowPlaying.inSet
+                            ? nowPlaying.currentRep.pluralString('rep')
+                            : 'Done',
+                        overflow: TextOverflow.fade,
+                        style: Theme.of(context)
+                            .textTheme
+                            .headline2
+                            .apply(
+                              color: Theme.of(context).colorScheme.primary,
+                              fontSizeFactor: 0.4,
+                            )
+                            .copyWith(fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                    Text(
+                        !nowPlaying.inEnd
+                            ? nowPlaying.currentSet.cardinal() + ' set'
+                            : nowPlaying.currentSet.pluralString('set'),
+                        overflow: TextOverflow.fade,
+                        style: Theme.of(context).textTheme.subtitle2.apply(
+                            color: Theme.of(context).accentColor,
+                            fontWeightDelta: 2)),
+                  ],
+                ),
+              ),
             ),
           ),
         ),
