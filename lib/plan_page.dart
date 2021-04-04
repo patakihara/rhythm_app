@@ -504,7 +504,44 @@ class _PlanPageState extends State<PlanPage> with TickerProviderStateMixin {
                   ),
                 ),
               ),
-              flexibleSpace: Container(),
+              flexibleSpace: Opacity(
+                opacity: (1 - appBarHeightController.value) * 0.8 + 0.2,
+                child: Stack(
+                  fit: StackFit.expand,
+                  alignment: AlignmentDirectional.bottomCenter,
+                  children: [
+                    Image.asset(
+                      'images/jpeg/image' +
+                          (context
+                                      .read<Library>()
+                                      .planNames
+                                      .indexOf(plan.name) +
+                                  1)
+                              .toString() +
+                          '.jpg',
+                      height: initialHeight - extent + 56,
+                      width: MediaQuery.of(context).size.width,
+                      fit: BoxFit.cover,
+                    ),
+                    Container(
+                      margin: EdgeInsets.all(0),
+                      height: initialHeight - extent + 56,
+                      width: MediaQuery.of(context).size.width,
+                      decoration: BoxDecoration(
+                        border: Border.all(width: 0),
+                        gradient: LinearGradient(
+                          begin: FractionalOffset.bottomCenter,
+                          end: FractionalOffset.topCenter,
+                          colors: [
+                            Colors.black.withOpacity(.90),
+                            Colors.black.withOpacity(.0),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
             body: Listener(
               onPointerMove: (details) {

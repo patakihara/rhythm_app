@@ -156,12 +156,14 @@ class PlanCard extends StatelessWidget {
       @required this.plan,
       this.height = 200,
       this.width = 200,
+      this.image,
       this.onTap})
       : super(key: key);
 
   final Plan plan;
   final double height;
   final double width;
+  final String image;
   final Future<void> Function() onTap;
 
   @override
@@ -186,43 +188,53 @@ class PlanCard extends StatelessWidget {
         closedShape: RoundedRectangleBorder(
             borderRadius: BorderRadius.all(Radius.circular(2))),
         closedBuilder: (BuildContext c, VoidCallback action) => Card(
+          semanticContainer: false,
+          borderOnForeground: false,
           shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.all(Radius.circular(2))),
           color: Theme.of(context).colorScheme.primary,
           margin: EdgeInsets.all(0),
           clipBehavior: Clip.hardEdge,
-          child: InkWell(
-            autofocus: true,
-            onTap: () async {
-              if (onTap != null) await onTap();
-              provider.Provider.of<MenuProvider>(context, listen: false)
-                  .showNavBar = false;
-              action();
-              Timer(
+          child: Stack(
+            fit: StackFit.expand,
+            alignment: AlignmentDirectional.center,
+            children: [
+              Image.asset(
+                image,
+                height: height,
+                width: width,
+                fit: BoxFit.cover,
+              ),
+              InkWell(
+                autofocus: true,
+                onTap: () async {
+                  if (onTap != null) await onTap();
                   provider.Provider.of<MenuProvider>(context, listen: false)
-                      .navBarTransitionWait, () {
-                provider.Provider.of<MenuProvider>(context, listen: false)
-                    .showNavBar = true;
-                provider.Provider.of<MenuProvider>(context, listen: false)
-                    .inPlanPage = true;
-              });
-            },
-            child: Container(
-              height: height,
-              width: width,
-              decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                      begin: FractionalOffset.bottomCenter,
-                      end: FractionalOffset.topCenter,
-                      colors: [
-                    Colors.black.withAlpha(80),
-                    Colors.black.withAlpha(30),
-                    Colors.black.withAlpha(0),
-                    Colors.black.withAlpha(0)
-                  ])),
-              child: Stack(
-                children: [
-                  Padding(
+                      .showNavBar = false;
+                  action();
+                  Timer(
+                      provider.Provider.of<MenuProvider>(context, listen: false)
+                          .navBarTransitionWait, () {
+                    provider.Provider.of<MenuProvider>(context, listen: false)
+                        .showNavBar = true;
+                    provider.Provider.of<MenuProvider>(context, listen: false)
+                        .inPlanPage = true;
+                  });
+                },
+                child: Container(
+                  margin: EdgeInsets.all(0),
+                  height: height,
+                  width: width,
+                  decoration: BoxDecoration(
+                      border: Border.all(width: 0),
+                      gradient: LinearGradient(
+                          begin: FractionalOffset.bottomCenter,
+                          end: FractionalOffset.topCenter,
+                          colors: [
+                            Colors.black.withOpacity(.90),
+                            Colors.black.withOpacity(.0)
+                          ])),
+                  child: Padding(
                     padding: EdgeInsets.all(20),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.end,
@@ -247,9 +259,9 @@ class PlanCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                ],
+                ),
               ),
-            ),
+            ],
           ),
         ),
         openBuilder: (BuildContext c, VoidCallback action) =>

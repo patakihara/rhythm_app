@@ -289,6 +289,7 @@ class _TimersMenuState extends State<TimersMenu> with TickerProviderStateMixin {
         plan: plans[i],
         width: side,
         height: side,
+        image: 'images/jpeg/image' + (i + 1).toString() + '.jpg',
         onTap: () async {
           await onTap(i);
           return;
@@ -725,125 +726,6 @@ class ListTitle extends StatelessWidget {
         ],
       ),
     );
-  }
-}
-
-class PlanMenu extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return provider.Consumer<MenuProvider>(
-        builder: (context, menuProvider, child) => Container(
-              key: Key(menuProvider.openPlan.name),
-              child: Scaffold(
-                appBar: AppBar(
-                  actions: [
-                    IconButton(icon: Icon(Icons.edit), onPressed: () {}),
-                    SizedBox(width: 16),
-                  ],
-                  leading: IconButton(
-                      icon: Icon(Icons.arrow_back),
-                      onPressed: () {
-                        menuProvider.menu = menuProvider.previousMenu;
-                      }),
-                  bottom: PreferredSize(
-                    preferredSize: Size.fromHeight(150),
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 72, bottom: 16),
-                      child: Row(
-                        children: [
-                          Column(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(menuProvider.openPlan.name,
-                                  style: Theme.of(context)
-                                      .primaryTextTheme
-                                      .headline6),
-                              Padding(
-                                padding: const EdgeInsets.only(top: 4.0),
-                                child: Text(
-                                    menuProvider.openPlan.exercises.length
-                                        .pluralString('exercise'),
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .subtitle1
-                                        .apply(
-                                            color:
-                                                Colors.white.withAlpha(190))),
-                              )
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  flexibleSpace: Container(
-                    decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                            begin: FractionalOffset.bottomCenter,
-                            end: FractionalOffset.topCenter,
-                            colors: [
-                          Colors.black.withAlpha(80),
-                          Colors.black.withAlpha(30),
-                          Colors.black.withAlpha(0),
-                          Colors.black.withAlpha(0)
-                        ])),
-                  ),
-                ),
-                body: SingleChildScrollView(
-                  child: Padding(
-                    padding: const EdgeInsets.only(left: 72.0 - 16.0),
-                    child: Column(
-                      children: [
-                        AnimatedExerciseTile(
-                            exercise: Exercise(name: 'Biceps')),
-                        AnimatedExerciseTile(
-                            exercise: Exercise(name: 'Biceps')),
-                        AnimatedExerciseTile(
-                            exercise: Exercise(name: 'Biceps')),
-                        AnimatedExerciseTile(
-                            exercise: Exercise(name: 'Biceps')),
-                        AnimatedExerciseTile(
-                            exercise: Exercise(name: 'Biceps')),
-                        AnimatedExerciseTile(
-                            exercise: Exercise(name: 'Biceps')),
-                        AnimatedExerciseTile(
-                            exercise: Exercise(name: 'Biceps')),
-                        AnimatedExerciseTile(
-                            exercise: Exercise(name: 'Biceps')),
-                        AnimatedExerciseTile(
-                            exercise: Exercise(name: 'Biceps')),
-                        AnimatedExerciseTile(
-                            exercise: Exercise(name: 'Biceps')),
-                        AnimatedExerciseTile(
-                            exercise: Exercise(name: 'Biceps')),
-                        AnimatedExerciseTile(
-                            exercise: Exercise(name: 'Biceps')),
-                      ],
-                    ),
-                  ),
-                ),
-                floatingActionButton: provider.Consumer<NowPlaying>(
-                  builder: (context, nowPlaying, child) => FloatingActionButton(
-                    child: nowPlaying.empty ||
-                            nowPlaying.plan.name != menuProvider.openPlan.name
-                        ? Icon(Icons.play_arrow)
-                        : Icon(Icons.stop),
-                    onPressed: () {
-                      if (nowPlaying.empty ||
-                          nowPlaying.plan.name != menuProvider.openPlan.name)
-                        nowPlaying.changePlan(menuProvider.openPlan);
-                      else
-                        nowPlaying.clear();
-                    },
-                  ),
-                ),
-                floatingActionButtonLocation:
-                    FloatingActionButtonLocation.endTop,
-              ),
-            )
-        // bottomNavigationBar: AnimatedPlayCard(),
-        );
   }
 }
 
