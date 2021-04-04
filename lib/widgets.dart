@@ -98,54 +98,35 @@ class AnimatedPlayCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return provider.Consumer2<NowPlaying, MenuProvider>(
-      builder: (context, nowPlaying, menuProvider, child) => AnimatedContainer(
-        duration: menuProvider.navBarTransitionDuration,
-        height: nowPlaying.empty ? 0 : menuProvider.playCardHeight,
-        child: SingleChildScrollView(
-          controller: ScrollController(),
-          child: OpenContainer(
-              transitionType: ContainerTransitionType.fade,
-              transitionDuration: menuProvider.pageTransitionDuration,
-              tappable: false,
-              useRootNavigator: true,
-              closedElevation:
-                  Theme.of(context).brightness == Brightness.dark ? 0 : 0,
-              openElevation: 8,
-              closedColor: Theme.of(context).brightness == Brightness.dark
-                  ? Colors.transparent
-                  : Theme.of(context).colorScheme.surface,
-              openColor: Theme.of(context).colorScheme.background,
-              closedShape: RoundedRectangleBorder(),
-              // onClosed: (_) {
-              //   menuProvider.navBarBarHeight = 56;
-              // },
-              closedBuilder: (BuildContext c, VoidCallback action) {
-                void open() {
-                  // menuProvider.navBarBarHeight = 0;
-                  // Timer(Duration(milliseconds: 3000), action);
+      builder: (context, nowPlaying, menuProvider, child) {
+        final action = () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => PlayPage()),
+          );
+        };
+        return AnimatedContainer(
+          duration: menuProvider.navBarTransitionDuration,
+          height: nowPlaying.empty ? 0 : menuProvider.playCardHeight,
+          child: SingleChildScrollView(
+            controller: ScrollController(),
+            child: GestureDetector(
+              onVerticalDragEnd: (DragEndDetails details) {
+                if (details.primaryVelocity < 0) {
                   action();
                 }
-
-                return GestureDetector(
-                  onVerticalDragEnd: (DragEndDetails details) {
-                    if (details.primaryVelocity < 0) {
-                      open();
-                    }
-                  },
-                  onTap: open,
-                  child: PlayCard(
-                    key: Key('playCardSmall'),
-                    context: context,
-                    action: open,
-                    progressOnTop: progressOnTop,
-                  ),
-                );
               },
-              openBuilder: (BuildContext c, VoidCallback action) {
-                return PlayPage(context: context);
-              }),
-        ),
-      ),
+              onTap: action,
+              child: PlayCard(
+                key: Key('playCardSmall'),
+                context: context,
+                action: action,
+                progressOnTop: progressOnTop,
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
