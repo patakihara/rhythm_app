@@ -721,9 +721,11 @@ class Metronome implements SoundTicker {
   void Function() beat1;
   void Function() beat2;
   void Function() beatReset;
+  int sourcesLength;
 
   Metronome(this.dur1, this.dur2, this.totalCycles,
       {this.beat1, this.beat2, this.beatReset}) {
+    sourcesLength = totalCycles * 4 + 1;
     duration = totalCycles * (dur1 + dur2);
     if (beat1 == null) {
       beat1 = () {};
@@ -734,6 +736,7 @@ class Metronome implements SoundTicker {
     if (beatReset == null) {
       beatReset = () {};
     }
+    setUpPlayers();
   }
 
   // if using just_audio
@@ -751,13 +754,14 @@ class Metronome implements SoundTicker {
       await audioPlayer2.setVolume(1);
       await audioPlayerFinish.setVolume(1);
       await audioPlayerWhole.setAudioSource(
-        LoopingAudioSource(
-          count: audioSources.length,
-          child: ConcatenatingAudioSource(
-            children: audioSources,
-          ),
+        ConcatenatingAudioSource(
+          children: audioSources,
         ),
       );
+      // await audioPlayerWhole.setLoopMode(LoopMode.off);
+      // audioPlayerWhole.processingStateStream.listen((event) {
+      //   if (event == ProcessingState.completed) audioPlayerWhole.pause();
+      // });
       await audioPlayerWhole.setVolume(1);
       _playersSetUp = true;
     }
@@ -782,7 +786,7 @@ class Metronome implements SoundTicker {
           child: silenceSource,
           start: Duration(milliseconds: 0),
           end: Duration(milliseconds: (dur1 * 1000).round()) -
-              Duration(milliseconds: 900),
+              Duration(milliseconds: 600),
         ),
       );
       list.add(beat1Source);
@@ -791,7 +795,7 @@ class Metronome implements SoundTicker {
           child: silenceSource,
           start: Duration(milliseconds: 0),
           end: Duration(milliseconds: (dur2 * 1000).round()) -
-              Duration(milliseconds: 900),
+              Duration(milliseconds: 672),
         ),
       );
     }
@@ -811,7 +815,7 @@ class Metronome implements SoundTicker {
     var time = stopwatch.elapsedMicroseconds / 1000000;
     time = time % (dur1 + dur2);
     stopwatch.start();
-    audioPlayerWhole.play().then((value) => audioPlayerWhole.stop());
+    audioPlayerWhole.play();
     if (time == 0) {
       _beat2();
     }
@@ -826,7 +830,8 @@ class Metronome implements SoundTicker {
     if (timer1 != null) timer1.cancel();
     if (timer2 != null) timer2.cancel();
     stopwatch.stop();
-    audioPlayerWhole.pause();
+    if (audioPlayerWhole.currentIndex < sourcesLength - 2)
+      audioPlayerWhole.pause();
     running = false;
     await AudioSession.instance
         .then((session) async => await session.setActive(false));
@@ -838,10 +843,12 @@ class Metronome implements SoundTicker {
     if (timer2 != null) timer2.cancel();
     stopwatch.reset();
     audioPlayerWhole.seek(Duration(seconds: 0), index: 0);
+    audioPlayerWhole.pause();
     _currentCycle = 0;
     beatReset();
     print('Metronome reset');
     if (running) {
+      audioPlayerWhole.play();
       var time = stopwatch.elapsedMicroseconds / 1000000;
       time = time % (dur1 + dur2);
       if (time == 0) {
@@ -938,7 +945,7 @@ class ReadyBeeper implements SoundTicker {
   bool running;
   bool _playersSetUp = false;
 
-  ReadyBeeper(this.duration, {this.shortDuration = 1.0, this.endDuration = 1}) {
+  ReadyBeeper(this.duration, {this.shortDuration = 1.0, this.endDuration = 2}) {
     longDuration = duration - endDuration - shortDuration * 2;
   }
 
