@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'exercise_page.dart';
+import 'package:rubber/rubber.dart';
 import 'package:animations/animations.dart';
 import 'package:provider/provider.dart' as provider;
 import 'classes.dart';
@@ -10,6 +10,8 @@ import 'plan_page.dart';
 import 'exercise_page.dart';
 import 'dart:async';
 import 'package:intl/intl.dart';
+import 'menu_page.dart';
+
 // import 'package:sounds/sounds.dart';
 
 // final Plan todaysPlan =
@@ -61,98 +63,142 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    return MenuPage();
+
     return provider.Consumer<MenuProvider>(
-        builder: (context, menuProvider, child) => Scaffold(
-              key: scaffoldKey,
-              drawer: Drawer(
-                child: ListView(
-                  children: [
-                    DrawerHeader(
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.primary,
+      builder: (context, menuProvider, child) => Scaffold(
+        key: scaffoldKey,
+        body: Container(
+          child: PageTransitionSwitcher(
+            duration: menuProvider.pageTransitionDuration,
+            transitionBuilder: (Widget child, Animation<double> animation,
+                Animation<double> secondaryAnimation) {
+              return FadeThroughTransition(
+                animation: animation,
+                secondaryAnimation: secondaryAnimation,
+                child: child,
+              );
+            },
+            child: (!menuProvider.inPlanPage && !menuProvider.inExercisePage)
+                ? Container(
+                    key: ValueKey('homePage'),
+                    child: Scaffold(
+                      key: ValueKey('scaffoldHomePage'), //scaffoldKey,
+                      drawer: Drawer(
+                        child: ListView(
+                          children: [
+                            DrawerHeader(
+                                decoration: BoxDecoration(
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
+                                child: Text('Rhythm')),
+                            ListTile(
+                              title: Text('Settings'),
+                              leading: Icon(Icons.settings),
+                              onTap: () {},
+                            ),
+                            AboutListTile(
+                              icon: Icon(Icons.info),
+                              applicationName: 'Rhythm',
+                              aboutBoxChildren: [
+                                Text('Gym timer and metronome.')
+                              ],
+                            ),
+                          ],
                         ),
-                        child: Text('Rhythm')),
-                    ListTile(
-                      title: Text('Settings'),
-                      leading: Icon(Icons.settings),
-                      onTap: () {},
+                      ),
+                      appBar: PreferredSize(
+                        preferredSize: Size.fromHeight(56),
+                        child: Material(
+                          animationDuration:
+                              menuProvider.navBarTransitionDuration,
+                          color: menuProvider.appBarElevated
+                              ? (Theme.of(context).brightness == Brightness.dark
+                                  ? Colors.black
+                                  : Theme.of(context)
+                                      .colorScheme
+                                      .surface
+                                      .withOpacity(1))
+                              : Theme.of(context).colorScheme.background,
+                          elevation: menuProvider.appBarElevated &&
+                                  menuProvider.menu != Menu.timers
+                              ? 4
+                              : 0,
+                          child: AppBar(
+                            // brightness: Brightness.light,
+                            // textTheme: Theme.of(context).textTheme.apply(
+                            // displayColor: Theme.of(context).colorScheme.onSurface),
+                            // leading: IconButton(
+                            //     icon: Icon(MdiIcons.menu),
+                            //     onPressed: () {
+                            //       scaffoldKey.currentState.openDrawer();
+                            //     }),
+                            primary: true,
+                            centerTitle: false,
+                            title: Text(
+                              'Rhythm',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .headline5
+                                  .apply(
+                                      fontWeightDelta: 3,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurface)
+                                  .copyWith(letterSpacing: -1.0),
+                            ),
+                            iconTheme: Theme.of(context).iconTheme.copyWith(
+                                color: Theme.of(context)
+                                    .textTheme
+                                    .headline5
+                                    .color),
+                            backgroundColor: Colors.transparent,
+                            elevation: 0,
+                          ),
+                        ),
+                      ),
+                      body: Container(
+                        child: PageTransitionSwitcher(
+                          duration: menuProvider.pageTransitionDuration,
+                          transitionBuilder: (Widget child,
+                              Animation<double> animation,
+                              Animation<double> secondaryAnimation) {
+                            return FadeThroughTransition(
+                              animation: animation,
+                              secondaryAnimation: secondaryAnimation,
+                              child: child,
+                            );
+                          },
+                          child: menuProvider.menuWidget,
+                        ),
+                      ),
                     ),
-                    AboutListTile(
-                      icon: Icon(Icons.info),
-                      applicationName: 'Rhythm',
-                      aboutBoxChildren: [Text('Gym timer and metronome.')],
-                    ),
-                  ],
-                ),
-              ),
-              appBar: PreferredSize(
-                preferredSize: Size.fromHeight(56),
-                child: Material(
-                  animationDuration: menuProvider.navBarTransitionDuration,
-                  color: menuProvider.appBarElevated
-                      ? (Theme.of(context).brightness == Brightness.dark
-                          ? Colors.black
-                          : Theme.of(context)
-                              .colorScheme
-                              .surface
-                              .withOpacity(1))
-                      : Theme.of(context).colorScheme.background,
-                  elevation: menuProvider.appBarElevated &&
-                          menuProvider.menu != Menu.timers
-                      ? 4
-                      : 0,
-                  child: AppBar(
-                    // brightness: Brightness.light,
-                    // textTheme: Theme.of(context).textTheme.apply(
-                    // displayColor: Theme.of(context).colorScheme.onSurface),
-                    // leading: IconButton(
-                    //     icon: Icon(MdiIcons.menu),
-                    //     onPressed: () {
-                    //       scaffoldKey.currentState.openDrawer();
-                    //     }),
-                    primary: true,
-                    centerTitle: false,
-                    title: Text(
-                      'Rhythm',
-                      style: Theme.of(context)
-                          .textTheme
-                          .headline5
-                          .apply(
-                              fontWeightDelta: 3,
-                              color: Theme.of(context).colorScheme.onSurface)
-                          .copyWith(letterSpacing: -1.0),
-                    ),
-                    iconTheme: Theme.of(context).iconTheme.copyWith(
-                        color: Theme.of(context).textTheme.headline5.color),
-                    backgroundColor: Colors.transparent,
-                    elevation: 0,
-                  ),
-                ),
-              ),
-              body: Container(
-                child: PageTransitionSwitcher(
-                  duration: menuProvider.pageTransitionDuration,
-                  transitionBuilder: (Widget child, Animation<double> animation,
-                      Animation<double> secondaryAnimation) {
-                    return FadeThroughTransition(
-                      animation: animation,
-                      secondaryAnimation: secondaryAnimation,
-                      child: child,
-                    );
-                  },
-                  child: menuProvider.menuWidget,
-                ),
-              ),
-              bottomNavigationBar: AnimatedPlayCard(),
-              // bottomNavigationBar: AnimatedBottomBar(
-              //   child: Column(
-              //     children: [
-              //       AnimatedPlayCard(),
-              //       buildBottomNavigationBar(context),
-              //     ],
-              //   ),
-              // ),
-            ));
+                  )
+                : menuProvider.inPlanPage
+                    ? Container(
+                        key: ValueKey('planPage'),
+                        child: PlanPage(
+                          plan: menuProvider.openPlan,
+                        ),
+                      )
+                    : Container(
+                        key: ValueKey('exercisePage'),
+                        child: ExercisePage(
+                          exercise: menuProvider.openExercise,
+                        ),
+                      ),
+          ),
+        ),
+        bottomNavigationBar: AnimatedPlayCard(),
+        // bottomNavigationBar: Column(
+        //   mainAxisSize: MainAxisSize.min,
+        //   children: [
+        //     AnimatedPlayCard(),
+        //     buildBottomNavigationBar(context),
+        //   ],
+        // ),
+      ),
+    );
   }
 
   Widget buildBottomNavigationBar(BuildContext context) {
@@ -254,6 +300,7 @@ class _TimersMenuState extends State<TimersMenu> with TickerProviderStateMixin {
       }
     });
     tabController = TabController(length: 2, vsync: this);
+    tabController.index = (menuProvider.tabMenu == TabMenu.plans) ? 0 : 1;
     tabController.addListener(() {
       if (tabController.index == 0)
         menuProvider.tabMenu = TabMenu.plans;
@@ -290,7 +337,7 @@ class _TimersMenuState extends State<TimersMenu> with TickerProviderStateMixin {
         plan: plans[i],
         width: side,
         height: side,
-        image: 'images/jpeg/image' + (i + 1).toString() + '.jpeg',
+        image: 'assets/images/jpeg/image' + (i + 1).toString() + '.jpeg',
         onTap: () async {
           await onTap(i);
           return;
@@ -725,81 +772,6 @@ class ListTitle extends StatelessWidget {
             child: Text(button),
           )
         ],
-      ),
-    );
-  }
-}
-
-class MyAppBar extends StatelessWidget {
-  const MyAppBar({
-    Key key,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return provider.Consumer<MenuProvider>(
-      builder: (context, menuProvider, child) => PreferredSize(
-        preferredSize: Size.fromHeight(180),
-        child: Hero(
-          tag: menuProvider.openPlan.name,
-          child: Material(
-              elevation: 4,
-              color: Theme.of(context).primaryColor.withAlpha(255),
-              child: Container(
-                decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                        begin: FractionalOffset.bottomCenter,
-                        end: FractionalOffset.topCenter,
-                        colors: [
-                      Colors.black.withAlpha(80),
-                      Colors.black.withAlpha(30),
-                      Colors.black.withAlpha(0),
-                      Colors.black.withAlpha(0)
-                    ])),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    IconTheme(
-                      data: Theme.of(context).primaryIconTheme,
-                      child: ButtonBar(
-                          alignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            IconButton(
-                                icon: Icon(Icons.arrow_back),
-                                onPressed: () {
-                                  menuProvider.menu = menuProvider.previousMenu;
-                                }),
-                            IconButton(
-                                icon: Icon(Icons.edit), onPressed: () {}),
-                          ]),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(left: 72, bottom: 16),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(menuProvider.openPlan.name,
-                              style:
-                                  Theme.of(context).primaryTextTheme.headline6),
-                          Padding(
-                            padding: const EdgeInsets.only(top: 8.0),
-                            child: Text(
-                                menuProvider.openPlan.exercises.length
-                                    .pluralString('exercise'),
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .subtitle1
-                                    .apply(color: Colors.white.withAlpha(190))),
-                          )
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              )),
-        ),
       ),
     );
   }

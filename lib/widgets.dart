@@ -150,103 +150,83 @@ class PlanCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return provider.Consumer<NowPlaying>(
-      builder: (context, nowPlaying, child) => OpenContainer(
-        transitionType: ContainerTransitionType.fade,
-        transitionDuration:
-            provider.Provider.of<MenuProvider>(context).pageTransitionDuration,
-        tappable: false,
-        useRootNavigator: true,
-        openColor: Theme.of(context).colorScheme.background,
-        closedColor: Theme.of(context).colorScheme.background,
-        closedElevation: 0,
-        openElevation: 1,
-        onClosed: (_) {
-          provider.Provider.of<MenuProvider>(context, listen: false)
-              .showNavBar = true;
-          provider.Provider.of<MenuProvider>(context, listen: false)
-              .inPlanPage = false;
-        },
-        closedShape: RoundedRectangleBorder(
+      builder: (context, nowPlaying, child) => Card(
+        semanticContainer: false,
+        borderOnForeground: false,
+        shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.all(Radius.circular(2))),
-        closedBuilder: (BuildContext c, VoidCallback action) => Card(
-          semanticContainer: false,
-          borderOnForeground: false,
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.all(Radius.circular(2))),
-          color: Theme.of(context).colorScheme.primary,
-          margin: EdgeInsets.all(0),
-          clipBehavior: Clip.hardEdge,
-          child: Stack(
-            fit: StackFit.expand,
-            alignment: AlignmentDirectional.center,
-            children: [
-              Image.asset(
-                image,
+        color: Theme.of(context).colorScheme.primary,
+        margin: EdgeInsets.all(0),
+        clipBehavior: Clip.hardEdge,
+        child: Stack(
+          fit: StackFit.expand,
+          alignment: AlignmentDirectional.center,
+          children: [
+            Image.asset(
+              image,
+              height: height,
+              width: width,
+              fit: BoxFit.cover,
+            ),
+            InkWell(
+              autofocus: true,
+              onTap: () async {
+                if (onTap != null) await onTap();
+                // provider.Provider.of<MenuProvider>(context, listen: false)
+                //     .showNavBar = false;
+                context.read<MenuProvider>().openPlan = plan;
+                context.read<MenuProvider>().inPlanPage = true;
+                // Timer(
+                //     provider.Provider.of<MenuProvider>(context, listen: false)
+                //         .navBarTransitionWait, () {
+                //   provider.Provider.of<MenuProvider>(context, listen: false)
+                //       .showNavBar = true;
+                //   provider.Provider.of<MenuProvider>(context, listen: false)
+                //       .inPlanPage = true;
+                // });
+              },
+              child: Container(
+                margin: EdgeInsets.all(0),
                 height: height,
                 width: width,
-                fit: BoxFit.cover,
-              ),
-              InkWell(
-                autofocus: true,
-                onTap: () async {
-                  if (onTap != null) await onTap();
-                  provider.Provider.of<MenuProvider>(context, listen: false)
-                      .showNavBar = false;
-                  action();
-                  Timer(
-                      provider.Provider.of<MenuProvider>(context, listen: false)
-                          .navBarTransitionWait, () {
-                    provider.Provider.of<MenuProvider>(context, listen: false)
-                        .showNavBar = true;
-                    provider.Provider.of<MenuProvider>(context, listen: false)
-                        .inPlanPage = true;
-                  });
-                },
-                child: Container(
-                  margin: EdgeInsets.all(0),
-                  height: height,
-                  width: width,
-                  decoration: BoxDecoration(
-                      border: Border.all(width: 0),
-                      gradient: LinearGradient(
-                          begin: FractionalOffset.bottomCenter,
-                          end: FractionalOffset.topCenter,
-                          colors: [
-                            Colors.black.withOpacity(.90),
-                            Colors.black.withOpacity(.0)
-                          ])),
-                  child: Padding(
-                    padding: EdgeInsets.all(20),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          plan.name,
-                          style: Theme.of(context)
-                              .textTheme
-                              .subtitle1
-                              .apply(color: Colors.white, fontWeightDelta: 1),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.only(top: 4.0),
-                          child: Text(
-                              plan.exercises.length.pluralString('exercise'),
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .subtitle1
-                                  .apply(color: Colors.white.withAlpha(190))),
-                        ),
-                      ],
-                    ),
+                decoration: BoxDecoration(
+                    border: Border.all(width: 0),
+                    gradient: LinearGradient(
+                        begin: FractionalOffset.bottomCenter,
+                        end: FractionalOffset.topCenter,
+                        colors: [
+                          Colors.black.withOpacity(.90),
+                          Colors.black.withOpacity(.0)
+                        ])),
+                child: Padding(
+                  padding: EdgeInsets.all(20),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        plan.name,
+                        style: Theme.of(context)
+                            .textTheme
+                            .subtitle1
+                            .apply(color: Colors.white, fontWeightDelta: 1),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4.0),
+                        child: Text(
+                            plan.exercises.length.pluralString('exercise'),
+                            style: Theme.of(context)
+                                .textTheme
+                                .subtitle1
+                                .apply(color: Colors.white.withAlpha(190))),
+                      ),
+                    ],
                   ),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
-        openBuilder: (BuildContext c, VoidCallback action) =>
-            PlanPage(plan: plan),
       ),
     );
   }
@@ -263,43 +243,14 @@ class AnimatedExerciseTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return OpenContainer(
-      transitionType: ContainerTransitionType.fade,
-      transitionDuration:
-          provider.Provider.of<MenuProvider>(context).pageTransitionDuration,
-      tappable: false,
-      useRootNavigator: true,
-      closedElevation: 1,
-      openElevation: 1,
-      closedColor: Theme.of(context).colorScheme.surface,
-      openColor: Theme.of(context).colorScheme.surface,
-      onClosed: (_) {
-        provider.Provider.of<MenuProvider>(context, listen: false).showNavBar =
-            true;
-        provider.Provider.of<MenuProvider>(context, listen: false)
-            .inExercisePage = false;
-      },
-      closedShape: RoundedRectangleBorder(),
-      closedBuilder: (BuildContext c, VoidCallback action) => ExerciseTile(
-          leading: leading,
-          exercise: exercise,
-          onTap: () async {
-            if (onTap != null) await onTap();
-            provider.Provider.of<MenuProvider>(context, listen: false)
-                .showNavBar = false;
-            action();
-            Timer(
-                provider.Provider.of<MenuProvider>(context, listen: false)
-                    .navBarTransitionWait, () {
-              provider.Provider.of<MenuProvider>(context, listen: false)
-                  .showNavBar = true;
-            });
-            provider.Provider.of<MenuProvider>(context, listen: false)
-                .inExercisePage = true;
-          }),
-      openBuilder: (BuildContext c, VoidCallback action) =>
-          ExercisePage(exercise: exercise),
-    );
+    return ExerciseTile(
+        leading: leading,
+        exercise: exercise,
+        onTap: () async {
+          if (onTap != null) await onTap();
+          context.read<MenuProvider>().openExercise = exercise;
+          context.read<MenuProvider>().inExercisePage = true;
+        });
   }
 }
 
@@ -317,7 +268,7 @@ class ExerciseTile extends StatelessWidget {
   final Widget trailing;
   final Exercise exercise;
   final bool selected;
-  final void Function() onTap;
+  final Function() onTap;
 
   String get tileDuration {
     return Duration(seconds: exercise.duration.round()).minutesSeconds();
@@ -479,9 +430,7 @@ class _PlayCardState extends State<PlayCard>
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          HeroTimerIndicator(
-                            isSmall: true,
-                          ),
+                          SizedBox(width: 40, height: 40),
                           Padding(
                             padding:
                                 const EdgeInsets.only(left: 16.0, right: 8),
@@ -684,6 +633,8 @@ class _TimerIndicatorState extends State<TimerIndicator> {
 
   double value;
 
+  double get scale => value * 3 - 2 > 0 ? value * 3 - 2 : 0;
+
   @override
   void initState() {
     super.initState();
@@ -731,7 +682,7 @@ class _TimerIndicatorState extends State<TimerIndicator> {
           curve: Curves.fastOutSlowIn,
           animation: false, //!nowPlaying.playing,
           animationDuration: animationDuration,
-          animateFromLastPercent: true,
+          animateFromLastPercent: false, //true,
           radius: interpolate(
             minOuterRadius,
             maxOuterRadius,
@@ -751,7 +702,7 @@ class _TimerIndicatorState extends State<TimerIndicator> {
             curve: Curves.fastOutSlowIn,
             animation: false, //!nowPlaying.playing,
             animationDuration: animationDuration,
-            animateFromLastPercent: true,
+            animateFromLastPercent: false, // true,
             radius: interpolate(
               minInnerRadius,
               maxInnerRadius,
@@ -764,44 +715,51 @@ class _TimerIndicatorState extends State<TimerIndicator> {
             percent: nowPlaying.percent.toDouble(),
             progressColor: Theme.of(context).accentColor,
             backgroundColor: Theme.of(context).accentColor.withAlpha(30),
-            center: Opacity(
-              opacity: value,
-              child: Container(
-                width: interpolate(
-                  minContainerWidth,
-                  maxContainerWidth,
-                ),
-                height: interpolate(
-                  minContainerHeight,
-                  maxContainerHeight,
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.max,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: <Widget>[
-                    Padding(
-                      padding: const EdgeInsets.all(4.0),
-                      child: Text(nowPlaying.inReady ? 'Ready' : 'Rest',
-                          overflow: TextOverflow.clip,
-                          style: Theme.of(context)
-                              .textTheme
-                              .headline2
-                              .apply(
-                                color:
-                                    Theme.of(context).colorScheme.onBackground,
-                                fontSizeFactor: 0.4,
-                              )
-                              .copyWith(fontWeight: FontWeight.w600)),
-                    ),
-                    !nowPlaying.inEnd
-                        ? Text(nowPlaying.currentSet.cardinal() + ' set',
+            center: Transform.scale(
+              scale: scale,
+              child: Opacity(
+                opacity: value,
+                child: Container(
+                  width: interpolate(
+                    minContainerWidth,
+                    maxContainerWidth,
+                  ),
+                  height: interpolate(
+                    minContainerHeight,
+                    maxContainerHeight,
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.max,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: <Widget>[
+                      Padding(
+                        padding: const EdgeInsets.all(4.0),
+                        child: Text(nowPlaying.inReady ? 'Ready' : 'Rest',
                             overflow: TextOverflow.clip,
-                            style: Theme.of(context).textTheme.subtitle2.apply(
-                                color: Theme.of(context).accentColor,
-                                fontWeightDelta: 2))
-                        : SizedBox(height: 0),
-                  ],
+                            style: Theme.of(context)
+                                .textTheme
+                                .headline2
+                                .apply(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onBackground,
+                                  fontSizeFactor: 0.4,
+                                )
+                                .copyWith(fontWeight: FontWeight.w600)),
+                      ),
+                      !nowPlaying.inEnd
+                          ? Text(nowPlaying.currentSet.cardinal() + ' set',
+                              overflow: TextOverflow.clip,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .subtitle2
+                                  .apply(
+                                      color: Theme.of(context).accentColor,
+                                      fontWeightDelta: 2))
+                          : SizedBox(height: 0),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -809,9 +767,9 @@ class _TimerIndicatorState extends State<TimerIndicator> {
         ),
         secondChild: CircularPercentIndicator(
           curve: Curves.fastOutSlowIn,
-          animation: !nowPlaying.playing,
+          animation: false, //!nowPlaying.playing,
           animationDuration: animationDuration,
-          animateFromLastPercent: true,
+          animateFromLastPercent: false, //true,
           radius: interpolate(
             minOuterRadius,
             maxOuterRadius,
@@ -826,9 +784,9 @@ class _TimerIndicatorState extends State<TimerIndicator> {
           backgroundColor: Theme.of(context).colorScheme.primary.withAlpha(40),
           center: CircularPercentIndicator(
             curve: Curves.fastOutSlowIn,
-            animation: !nowPlaying.playing,
+            animation: false, //!nowPlaying.playing,
             animationDuration: animationDuration,
-            animateFromLastPercent: true,
+            animateFromLastPercent: false, // true,
             radius: interpolate(
               minInnerRadius,
               maxInnerRadius,
@@ -841,48 +799,51 @@ class _TimerIndicatorState extends State<TimerIndicator> {
             percent: nowPlaying.percent.toDouble(),
             progressColor: Theme.of(context).accentColor,
             backgroundColor: Theme.of(context).accentColor.withAlpha(40),
-            center: Opacity(
-              opacity: value,
-              child: Container(
-                width: interpolate(
-                  minContainerWidth,
-                  maxContainerWidth,
-                ),
-                height: interpolate(
-                  minContainerHeight,
-                  maxContainerHeight,
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.max,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: <Widget>[
-                    Padding(
-                      padding: const EdgeInsets.all(4.0),
-                      child: Text(
-                        nowPlaying.inSet
-                            ? nowPlaying.currentRep.pluralString('rep')
-                            : 'Done',
-                        overflow: TextOverflow.clip,
-                        style: Theme.of(context)
-                            .textTheme
-                            .headline2
-                            .apply(
-                              color: Theme.of(context).colorScheme.primary,
-                              fontSizeFactor: 0.4,
-                            )
-                            .copyWith(fontWeight: FontWeight.w600),
+            center: Transform.scale(
+              scale: scale,
+              child: Opacity(
+                opacity: value,
+                child: Container(
+                  width: interpolate(
+                    minContainerWidth,
+                    maxContainerWidth,
+                  ),
+                  height: interpolate(
+                    minContainerHeight,
+                    maxContainerHeight,
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.max,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: <Widget>[
+                      Padding(
+                        padding: const EdgeInsets.all(4.0),
+                        child: Text(
+                          nowPlaying.inSet
+                              ? nowPlaying.currentRep.pluralString('rep')
+                              : 'Done',
+                          overflow: TextOverflow.clip,
+                          style: Theme.of(context)
+                              .textTheme
+                              .headline2
+                              .apply(
+                                color: Theme.of(context).colorScheme.primary,
+                                fontSizeFactor: 0.4,
+                              )
+                              .copyWith(fontWeight: FontWeight.w600),
+                        ),
                       ),
-                    ),
-                    Text(
-                        !nowPlaying.inEnd
-                            ? nowPlaying.currentSet.cardinal() + ' set'
-                            : nowPlaying.currentSet.pluralString('set'),
-                        overflow: TextOverflow.clip,
-                        style: Theme.of(context).textTheme.subtitle2.apply(
-                            color: Theme.of(context).accentColor,
-                            fontWeightDelta: 2)),
-                  ],
+                      Text(
+                          !nowPlaying.inEnd
+                              ? nowPlaying.currentSet.cardinal() + ' set'
+                              : nowPlaying.currentSet.pluralString('set'),
+                          overflow: TextOverflow.clip,
+                          style: Theme.of(context).textTheme.subtitle2.apply(
+                              color: Theme.of(context).accentColor,
+                              fontWeightDelta: 2)),
+                    ],
+                  ),
                 ),
               ),
             ),
