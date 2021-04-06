@@ -152,7 +152,7 @@ class _ExercisePageState extends State<ExercisePage> {
       context.read<MenuProvider>().showNavBar = true;
       context.read<MenuProvider>().inExercisePage = false;
       context.read<MenuProvider>().openPlan = null;
-      return true;
+      return !fromTile;
     } else {
       if (changed)
         showDialog<bool>(

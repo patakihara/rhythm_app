@@ -402,6 +402,38 @@ enum Menu { home, timers, calendar }
 
 enum TabMenu { plans, exercises }
 
+class Progress extends ChangeNotifier {
+  num __time = 0;
+  num __setTime = 0;
+  double __percent = 0;
+  double __setPercent = 0;
+
+  num get time => __time;
+  num get setTime => __setTime;
+  double get percent => __percent;
+  double get setPercent => __setPercent;
+
+  set _time(num value) {
+    __time = value;
+    notifyListeners();
+  }
+
+  set _setTime(num value) {
+    __setTime = value;
+    notifyListeners();
+  }
+
+  set _percent(double value) {
+    __percent = value;
+    notifyListeners();
+  }
+
+  set _setPercent(double value) {
+    __setPercent = value;
+    notifyListeners();
+  }
+}
+
 class NowPlaying extends ChangeNotifier {
   NowPlaying._privateContructor();
 
@@ -413,8 +445,9 @@ class NowPlaying extends ChangeNotifier {
 
   Plan plan;
   int _exerciseIndex = 0;
-  num time = 0;
-  num setTime = 0;
+  // num time = 0;
+  // num setTime = 0;
+  Progress progress = Progress();
   ExerciseTimer exerciseTimer;
   RepState repState = RepState.rest;
   bool _cleared = false;
@@ -479,23 +512,23 @@ class NowPlaying extends ChangeNotifier {
       return exerciseTimer.index;
   }
 
-  double get percent {
-    if (empty)
-      return 0;
-    else
-      return time / duration;
-  }
+  // double get percent {
+  //   if (empty)
+  //     return 0;
+  //   else
+  //     return progress.time / duration;
+  // }
 
-  double get setPerc {
-    if (empty)
-      return 0;
-    else if (exerciseTimer.ended)
-      return 1.0;
-    else {
-      var perc = setTime / exercise.durations[timerIndex];
-      return perc > 1 ? 1 : perc;
-    }
-  }
+  // double get setPercent {
+  //   if (empty)
+  //     return 0;
+  //   else if (exerciseTimer.ended)
+  //     return 1.0;
+  //   else {
+  //     var perc = progress.setTime / exercise.durations[timerIndex];
+  //     return perc > 1 ? 1 : perc;
+  //   }
+  // }
 
   int get currentSet {
     if (empty)
@@ -510,7 +543,7 @@ class NowPlaying extends ChangeNotifier {
     if (empty)
       return 0;
     else
-      return (setPerc * exercise.reps + 0.5).floor();
+      return (progress.setPercent * exercise.reps + 0.5).floor();
   }
 
   bool get inReady {
@@ -580,10 +613,19 @@ class NowPlaying extends ChangeNotifier {
   void updateTime() {
     if (exerciseTimer == null) return;
     // if (time == exerciseTimer.elapsedSeconds) return;
-    time = exerciseTimer.elapsedSeconds;
-    setTime = exerciseTimer.elapsedSubSeconds;
+    progress._time = exerciseTimer.elapsedSeconds;
+    progress._setTime = exerciseTimer.elapsedSubSeconds;
+    progress._percent = progress.time / duration;
+    var perc;
+    if (exerciseTimer.ended)
+      perc = 1.0;
+    else {
+      perc = progress.setTime / exercise.durations[timerIndex];
+      perc = perc > 1 ? 1 : perc;
+    }
+    progress._setPercent = perc;
     // print('Time updated');
-    notifyListeners();
+    // notifyListeners();
   }
 
   void _repStateUp() {
@@ -648,6 +690,7 @@ class NowPlaying extends ChangeNotifier {
     else
       exerciseTimer.skipNext();
     updateTime();
+    notifyListeners();
   }
 
   void skipBackward() {
@@ -665,13 +708,14 @@ class NowPlaying extends ChangeNotifier {
   }
 
   void skipPrevious() {
-    if (time < 1 && !isFirst) {
+    if (progress.time < 1 && !isFirst) {
       skipBackward();
       for (var i = 0; i < exerciseTimer.timers.length - 1; i++) skipNext();
     } else {
       exerciseTimer.skipPrevious();
       updateTime();
     }
+    notifyListeners();
   }
 
   void togglePlay() {

@@ -830,7 +830,8 @@ class Metronome implements SoundTicker {
     if (timer1 != null) timer1.cancel();
     if (timer2 != null) timer2.cancel();
     stopwatch.stop();
-    if (audioPlayerWhole.currentIndex < sourcesLength - 2)
+    if (audioPlayerWhole.currentIndex != null &&
+        audioPlayerWhole.currentIndex < sourcesLength - 2)
       audioPlayerWhole.pause();
     running = false;
     await AudioSession.instance

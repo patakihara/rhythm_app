@@ -373,7 +373,7 @@ class _PlanPageState extends State<PlanPage> with TickerProviderStateMixin {
       context.read<MenuProvider>().showNavBar = true;
       context.read<MenuProvider>().inPlanPage = false;
       context.read<MenuProvider>().openPlan = null;
-      return true;
+      return !fromCard;
     } else {
       if (changed)
         showDialog<bool>(
