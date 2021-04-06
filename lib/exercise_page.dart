@@ -146,10 +146,13 @@ class _ExercisePageState extends State<ExercisePage> {
 
   Future<bool> onBackPressed() async {
     if (exercise == null || !editing) {
-      if (fromTile)
-        provider.Provider.of<MenuProvider>(context, listen: false).showNavBar =
-            false;
-      return true;
+      // if (fromTile)
+      //   provider.Provider.of<MenuProvider>(context, listen: false).showNavBar =
+      //       false;
+      context.read<MenuProvider>().showNavBar = true;
+      context.read<MenuProvider>().inExercisePage = false;
+      context.read<MenuProvider>().openPlan = null;
+      return !fromTile;
     } else {
       if (changed)
         showDialog<bool>(
@@ -456,7 +459,7 @@ class _ExercisePageState extends State<ExercisePage> {
           ),
         ),
         floatingActionButtonLocation: FloatingActionButtonLocation.endTop,
-        bottomNavigationBar: AnimatedPlayCard(),
+        // bottomNavigationBar: AnimatedPlayCard(),
         // bottomNavigationBar: AnimatedBottomBar(
         //   child: Column(children: [AnimatedPlayCard(progressOnTop: true)]),
         // ),

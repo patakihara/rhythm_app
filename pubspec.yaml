@@ -33,6 +33,7 @@ dependencies:
   timeline_tile: ^2.0.0
   google_fonts: ^2.0.0
   intl: ^0.17.0
+  rubber: ^0.5.0
   flutter_media_notification:
     git: 
       url: https://github.com/guilhermepata/flutter_media_notification.git
@@ -43,6 +44,7 @@ dependencies:
   just_audio: ^0.7.3 #works fucking perfectly
   audio_session: ^0.1.0
   audio_service: ^0.17.0 #didn't work, seems too complicated
+  
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.

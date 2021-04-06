@@ -370,7 +370,10 @@ class _PlanPageState extends State<PlanPage> with TickerProviderStateMixin {
       // if (fromCard)
       // provider.Provider.of<MenuProvider>(context, listen: false).showNavBar =
       // false;
-      return true;
+      context.read<MenuProvider>().showNavBar = true;
+      context.read<MenuProvider>().inPlanPage = false;
+      context.read<MenuProvider>().openPlan = null;
+      return !fromCard;
     } else {
       if (changed)
         showDialog<bool>(
@@ -410,302 +413,314 @@ class _PlanPageState extends State<PlanPage> with TickerProviderStateMixin {
 
     return WillPopScope(
       onWillPop: onBackPressed,
-      child: Stack(
-        children: [
-          buildAppBarBackground(context, initialHeight),
-          // buildBodyBackground(context, initialHeight),
-          Scaffold(
-            key: _scaffoldKey,
-            backgroundColor: Colors.transparent,
-            appBar: AppBar(
-              elevation: 0,
+      child: Scaffold(
+        body: Stack(
+          children: [
+            buildAppBarBackground(context, initialHeight),
+            // buildBodyBackground(context, initialHeight),
+            Scaffold(
+              key: _scaffoldKey,
               backgroundColor: Colors.transparent,
-              textTheme: Theme.of(context).textTheme,
-              actionsIconTheme: Theme.of(context).primaryIconTheme,
-              iconTheme: Theme.of(context).primaryIconTheme,
-              // actions: [
-              //   IconButton(icon: Icon(Icons.edit), onPressed: () {}),
-              // ],
-              leading: IconButton(
-                  icon: plan == null || editing
-                      ? Icon(Icons.close)
-                      : Icon(Icons.arrow_back),
-                  onPressed: () => Navigator.maybePop(context)),
-              bottom: PreferredSize(
-                preferredSize: Size.fromHeight(initialHeight - extent),
-                child: Padding(
-                  padding: const EdgeInsets.only(left: 72, bottom: 8),
-                  child: Row(
-                    // mainAxisAlignment: MainAxisAlignment.start,
-                    // mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            width: MediaQuery.of(context).size.width - 72 * 3,
-                            child: provider.Consumer<Library>(
-                              builder: (context, library, child) => Theme(
-                                data: ThemeData(brightness: Brightness.dark),
-                                child: TextFormField(
-                                  autofocus: editing &&
-                                      plan == null &&
-                                      (name == null || name.isEmpty),
-                                  readOnly: !editing,
-                                  initialValue: name,
-                                  textCapitalization:
-                                      TextCapitalization.sentences,
-                                  autocorrect: true,
-                                  autovalidateMode:
-                                      AutovalidateMode.onUserInteraction,
-                                  validator: (value) {
-                                    var counts =
-                                        provider.Provider.of<Library>(context)
-                                            .planNameCounts;
-                                    if (value.isEmpty) {
-                                      return 'You have to enter a name.';
-                                    } else if (counts[name] == null) {
-                                      return null;
-                                    } else if (plan == null) {
-                                      return 'Plan already exists.';
-                                    } else if (counts[name] > 1) {
-                                      return 'Plan already exists.';
-                                    } else if (name != plan.name) {
-                                      return 'Plan already exists.';
-                                    } else {
-                                      return null;
-                                    }
-                                  },
-                                  decoration: InputDecoration(
-                                      // labelText: 'Name',
-                                      hintText: 'New plan',
-                                      border: InputBorder.none),
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .headline5
-                                      .apply(
-                                          color: Colors.white,
-                                          fontWeightDelta: 1),
-                                  onChanged: (newValue) {
-                                    setState(() {
-                                      name = newValue;
-                                      updateChanged();
-                                    });
-                                    //print(name);
-                                  },
+              appBar: AppBar(
+                elevation: 0,
+                backgroundColor: Colors.transparent,
+                textTheme: Theme.of(context).textTheme,
+                actionsIconTheme: Theme.of(context).primaryIconTheme,
+                iconTheme: Theme.of(context).primaryIconTheme,
+                // actions: [
+                //   IconButton(icon: Icon(Icons.edit), onPressed: () {}),
+                // ],
+                leading: IconButton(
+                    icon: plan == null || editing
+                        ? Icon(Icons.close)
+                        : Icon(Icons.arrow_back),
+                    onPressed: () => Navigator.maybePop(context)),
+                bottom: PreferredSize(
+                  preferredSize: Size.fromHeight(initialHeight - extent),
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 72, bottom: 8),
+                    child: Row(
+                      // mainAxisAlignment: MainAxisAlignment.start,
+                      // mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Column(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              width: MediaQuery.of(context).size.width - 72 * 3,
+                              child: provider.Consumer<Library>(
+                                builder: (context, library, child) => Theme(
+                                  data: ThemeData(brightness: Brightness.dark),
+                                  child: TextFormField(
+                                    autofocus: editing &&
+                                        plan == null &&
+                                        (name == null || name.isEmpty),
+                                    readOnly: !editing,
+                                    initialValue: name,
+                                    textCapitalization:
+                                        TextCapitalization.sentences,
+                                    autocorrect: true,
+                                    autovalidateMode:
+                                        AutovalidateMode.onUserInteraction,
+                                    validator: (value) {
+                                      var counts =
+                                          provider.Provider.of<Library>(context)
+                                              .planNameCounts;
+                                      if (value.isEmpty) {
+                                        return 'You have to enter a name.';
+                                      } else if (counts[name] == null) {
+                                        return null;
+                                      } else if (plan == null) {
+                                        return 'Plan already exists.';
+                                      } else if (counts[name] > 1) {
+                                        return 'Plan already exists.';
+                                      } else if (name != plan.name) {
+                                        return 'Plan already exists.';
+                                      } else {
+                                        return null;
+                                      }
+                                    },
+                                    decoration: InputDecoration(
+                                        // labelText: 'Name',
+                                        hintText: 'New plan',
+                                        border: InputBorder.none),
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .headline5
+                                        .apply(
+                                            color: Colors.white,
+                                            fontWeightDelta: 1),
+                                    onChanged: (newValue) {
+                                      setState(() {
+                                        name = newValue;
+                                        updateChanged();
+                                      });
+                                      //print(name);
+                                    },
+                                  ),
                                 ),
                               ),
                             ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                flexibleSpace: Opacity(
+                  opacity: (1 - appBarHeightController.value) * 0.8 + 0.2,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    alignment: AlignmentDirectional.bottomCenter,
+                    children: [
+                      Image.asset(
+                        'assets/images/jpeg/image' +
+                            (plan != null
+                                ? (context
+                                            .read<Library>()
+                                            .planNames
+                                            .indexOf(plan.name) +
+                                        1)
+                                    .toString()
+                                : (context.read<Library>().planNames.length + 1)
+                                    .toString()) +
+                            '.jpeg',
+                        height: initialHeight - extent + 56,
+                        width: MediaQuery.of(context).size.width,
+                        fit: BoxFit.cover,
+                      ),
+                      Container(
+                        margin: EdgeInsets.all(0),
+                        height: initialHeight - extent + 56,
+                        width: MediaQuery.of(context).size.width,
+                        decoration: BoxDecoration(
+                          border: Border.all(width: 0),
+                          gradient: LinearGradient(
+                            begin: FractionalOffset.bottomCenter,
+                            end: FractionalOffset.topCenter,
+                            colors: [
+                              Colors.black.withOpacity(.90),
+                              Colors.black.withOpacity(.0),
+                            ],
                           ),
-                        ],
+                        ),
                       ),
                     ],
                   ),
                 ),
               ),
-              flexibleSpace: Opacity(
-                opacity: (1 - appBarHeightController.value) * 0.8 + 0.2,
-                child: Stack(
-                  fit: StackFit.expand,
-                  alignment: AlignmentDirectional.bottomCenter,
+              body: Listener(
+                onPointerMove: (details) {
+                  //print('updated');
+                  if (!editing &&
+                      (extent - details.delta.dy) <= maxExtent &&
+                      extent - details.delta.dy >= 0 &&
+                      details.delta.dy.abs() > details.delta.dx.abs() &&
+                      ((details.delta.dy < 0) ||
+                          (details.delta.dy > 0 && atTopOfList))) {
+                    setState(() {
+                      appBarHeightController.value =
+                          appBarHeightController.value -
+                              details.delta.dy / maxExtent;
+                      if (appBarHeightController.value >= 0.95)
+                        appBarHeightController.fling();
+                    });
+                  }
+                  if (!scrollable ||
+                      (atTopOfList && bottomVisibleNow && !editing)) {
+                    scrollController.jumpTo(0);
+                  } else if (!editing &&
+                      scrollController.offset - details.delta.dy >= -0.001) {
+                    setState(() {
+                      scrollController
+                          .jumpTo(scrollController.offset - details.delta.dy);
+                      if (scrollController.offset - details.delta.dy <= 0)
+                        atTopOfList = true;
+                    });
+                  }
+                  // else if (details.delta.dy <= 0 && bottomVisibleNow) {
+                  //   scrollController.jumpTo(scrollController.offset);
+                  // } else if (!editing &&
+                  //     scrollController.offset - details.delta.dy >= -0.01) {
+                  //   setState(() {
+                  //     scrollController
+                  //         .jumpTo(scrollController.offset - details.delta.dy);
+                  //     if (scrollController.offset - details.delta.dy <= 0)
+                  //       atTopOfList = true;
+                  //   });
+                  // }
+                  //print('scrollable: ' + scrollable.toString());
+                  // if (details.delta.dy < 0)
+                  //print('moving up');
+                  // else
+                  //print('moving down');
+                  //print('All items visible:' + bottomVisibleNow.toString());
+                },
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  verticalDirection: VerticalDirection.up,
                   children: [
-                    Image.asset(
-                      'images/jpeg/image' +
-                          (context
-                                      .read<Library>()
-                                      .planNames
-                                      .indexOf(plan.name) +
-                                  1)
-                              .toString() +
-                          '.jpeg',
-                      height: initialHeight - extent + 56,
-                      width: MediaQuery.of(context).size.width,
-                      fit: BoxFit.cover,
+                    Expanded(
+                      child: editing
+                          ? ReorderableListView(
+                              // header: buildHeader(),
+                              scrollController: scrollController,
+                              onReorder: (oldIndex, newIndex) {
+                                print('old index: ' + oldIndex.toString());
+                                print('new index: ' + newIndex.toString());
+                                setState(() =>
+                                    _reorderExercises(oldIndex, newIndex));
+                              },
+                              children: buildExerciseTiles(context))
+                          : ListView(
+                              controller: scrollController,
+                              clipBehavior: Clip.hardEdge,
+                              // physics:
+                              //     scrollable ? null : NeverScrollableScrollPhysics(),
+                              children: buildExerciseTiles(context),
+                            ),
                     ),
-                    Container(
-                      margin: EdgeInsets.all(0),
-                      height: initialHeight - extent + 56,
-                      width: MediaQuery.of(context).size.width,
-                      decoration: BoxDecoration(
-                        border: Border.all(width: 0),
-                        gradient: LinearGradient(
-                          begin: FractionalOffset.bottomCenter,
-                          end: FractionalOffset.topCenter,
-                          colors: [
-                            Colors.black.withOpacity(.90),
-                            Colors.black.withOpacity(.0),
-                          ],
+                    buildHeader(),
+                  ],
+                ),
+              ),
+              floatingActionButton: Padding(
+                padding: const EdgeInsets.only(left: 28),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    FloatingActionButton(
+                      backgroundColor: Color.alphaBlend(
+                          Theme.of(context)
+                              .colorScheme
+                              .onBackground
+                              .withOpacity(0.2),
+                          Theme.of(context).colorScheme.background),
+                      child: Icon(editing ? Icons.save : Icons.edit,
+                          color: changed && valid || !editing
+                              ? Theme.of(context).iconTheme.color
+                              : Theme.of(context)
+                                  .iconTheme
+                                  .color
+                                  .withOpacity(.38)),
+                      onPressed: changed && valid || !editing
+                          ? () {
+                              FocusScope.of(context).unfocus();
+                              setState(() {
+                                editing = !editing;
+                              });
+                              if (!editing) {
+                                appBarHeightController.fling(velocity: -1);
+                                _scaffoldKey.currentState.showSnackBar(
+                                    SnackBar(content: Text('Plan saved')));
+                                var names = exerciseNames;
+                                if (plan == null) {
+                                  plan = Plan.fromList(name, names);
+                                  provider.Provider.of<Library>(context,
+                                          listen: false)
+                                      .addPlan(plan);
+                                } else {
+                                  var newPlan = Plan.fromList(name, names);
+                                  provider.Provider.of<Library>(context,
+                                          listen: false)
+                                      .swapPlan(plan, newPlan);
+                                  plan = newPlan;
+                                }
+                              } else {
+                                appBarHeightController.fling(velocity: 1);
+                              }
+                            }
+                          : null,
+                      mini: true,
+                    ),
+                    AnimatedContainer(
+                      margin: EdgeInsets.only(right: !editing ? 0 : 28),
+                      height: editing ? 0 : 56,
+                      width: editing ? 0 : 56,
+                      duration: Duration(milliseconds: 150),
+                      child: provider.Consumer<NowPlaying>(
+                        builder: (context, nowPlaying, child) =>
+                            FloatingActionButton(
+                          heroTag: 'playButton',
+                          child: AnimatedOpacity(
+                            opacity: editing ? 0 : 1,
+                            duration: Duration(milliseconds: 150),
+                            child: plan == null ||
+                                    nowPlaying.empty ||
+                                    nowPlaying.plan.name != plan.name
+                                ? Icon(Icons.play_arrow)
+                                : Icon(Icons.stop),
+                          ),
+                          onPressed: () {
+                            if (nowPlaying.empty ||
+                                nowPlaying.plan.name != plan.name)
+                              nowPlaying.changePlan(plan);
+                            else
+                              nowPlaying.clear();
+                          },
                         ),
                       ),
                     ),
                   ],
                 ),
               ),
+              floatingActionButtonLocation: FloatingActionButtonLocation.endTop,
             ),
-            body: Listener(
-              onPointerMove: (details) {
-                //print('updated');
-                if (!editing &&
-                    (extent - details.delta.dy) <= maxExtent &&
-                    extent - details.delta.dy >= 0 &&
-                    details.delta.dy.abs() > details.delta.dx.abs() &&
-                    ((details.delta.dy < 0) ||
-                        (details.delta.dy > 0 && atTopOfList))) {
-                  setState(() {
-                    appBarHeightController.value =
-                        appBarHeightController.value -
-                            details.delta.dy / maxExtent;
-                    if (appBarHeightController.value >= 0.95)
-                      appBarHeightController.fling();
-                  });
-                }
-                if (!scrollable ||
-                    (atTopOfList && bottomVisibleNow && !editing)) {
-                  scrollController.jumpTo(0);
-                } else if (!editing &&
-                    scrollController.offset - details.delta.dy >= -0.001) {
-                  setState(() {
-                    scrollController
-                        .jumpTo(scrollController.offset - details.delta.dy);
-                    if (scrollController.offset - details.delta.dy <= 0)
-                      atTopOfList = true;
-                  });
-                }
-                // else if (details.delta.dy <= 0 && bottomVisibleNow) {
-                //   scrollController.jumpTo(scrollController.offset);
-                // } else if (!editing &&
-                //     scrollController.offset - details.delta.dy >= -0.01) {
-                //   setState(() {
-                //     scrollController
-                //         .jumpTo(scrollController.offset - details.delta.dy);
-                //     if (scrollController.offset - details.delta.dy <= 0)
-                //       atTopOfList = true;
-                //   });
-                // }
-                //print('scrollable: ' + scrollable.toString());
-                // if (details.delta.dy < 0)
-                //print('moving up');
-                // else
-                //print('moving down');
-                //print('All items visible:' + bottomVisibleNow.toString());
-              },
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                verticalDirection: VerticalDirection.up,
-                children: [
-                  Expanded(
-                    child: editing
-                        ? ReorderableListView(
-                            // header: buildHeader(),
-                            scrollController: scrollController,
-                            onReorder: (oldIndex, newIndex) {
-                              print('old index: ' + oldIndex.toString());
-                              print('new index: ' + newIndex.toString());
-                              setState(
-                                  () => _reorderExercises(oldIndex, newIndex));
-                            },
-                            children: buildExerciseTiles(context))
-                        : ListView(
-                            controller: scrollController,
-                            clipBehavior: Clip.hardEdge,
-                            // physics:
-                            //     scrollable ? null : NeverScrollableScrollPhysics(),
-                            children: buildExerciseTiles(context),
-                          ),
-                  ),
-                  buildHeader(),
-                ],
-              ),
-            ),
-            floatingActionButton: Padding(
-              padding: const EdgeInsets.only(left: 28),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  FloatingActionButton(
-                    backgroundColor: Color.alphaBlend(
-                        Theme.of(context)
-                            .colorScheme
-                            .onBackground
-                            .withOpacity(0.2),
-                        Theme.of(context).colorScheme.background),
-                    child: Icon(editing ? Icons.save : Icons.edit,
-                        color: changed && valid || !editing
-                            ? Theme.of(context).iconTheme.color
-                            : Theme.of(context)
-                                .iconTheme
-                                .color
-                                .withOpacity(.38)),
-                    onPressed: changed && valid || !editing
-                        ? () {
-                            FocusScope.of(context).unfocus();
-                            setState(() {
-                              editing = !editing;
-                            });
-                            if (!editing) {
-                              appBarHeightController.fling(velocity: -1);
-                              _scaffoldKey.currentState.showSnackBar(
-                                  SnackBar(content: Text('Plan saved')));
-                              var names = exerciseNames;
-                              if (plan == null) {
-                                plan = Plan.fromList(name, names);
-                                provider.Provider.of<Library>(context,
-                                        listen: false)
-                                    .addPlan(plan);
-                              } else {
-                                var newPlan = Plan.fromList(name, names);
-                                provider.Provider.of<Library>(context,
-                                        listen: false)
-                                    .swapPlan(plan, newPlan);
-                                plan = newPlan;
-                              }
-                            } else {
-                              appBarHeightController.fling(velocity: 1);
-                            }
-                          }
-                        : null,
-                    mini: true,
-                  ),
-                  AnimatedContainer(
-                    margin: EdgeInsets.only(right: !editing ? 0 : 28),
-                    height: editing ? 0 : 56,
-                    width: editing ? 0 : 56,
-                    duration: Duration(milliseconds: 150),
-                    child: provider.Consumer<NowPlaying>(
-                      builder: (context, nowPlaying, child) =>
-                          FloatingActionButton(
-                        heroTag: 'playButton',
-                        child: AnimatedOpacity(
-                          opacity: editing ? 0 : 1,
-                          duration: Duration(milliseconds: 150),
-                          child: plan == null ||
-                                  nowPlaying.empty ||
-                                  nowPlaying.plan.name != plan.name
-                              ? Icon(Icons.play_arrow)
-                              : Icon(Icons.stop),
-                        ),
-                        onPressed: () {
-                          if (nowPlaying.empty ||
-                              nowPlaying.plan.name != plan.name)
-                            nowPlaying.changePlan(plan);
-                          else
-                            nowPlaying.clear();
-                        },
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            floatingActionButtonLocation: FloatingActionButtonLocation.endTop,
-            bottomNavigationBar: AnimatedPlayCard(),
-            // bottomNavigationBar: AnimatedBottomBar(
-            //   child: Column(children: [AnimatedPlayCard(progressOnTop: true)]),
-            // ),
-          ),
-        ],
+          ],
+        ),
+        // bottomNavigationBar: AnimatedPlayCard(),
+        // bottomNavigationBar: AnimatedBottomBar(
+        //   child: Column(children: [AnimatedPlayCard(progressOnTop: true)]),
+        // ),
+        // bottomNavigationBar: Column(
+        //   mainAxisSize: MainAxisSize.min,
+        //   children: [
+        //     AnimatedPlayCard(),
+        //     buildBottomNavigationBar(context),
+        //   ],
+        // ),
       ),
     );
   }

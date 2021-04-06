@@ -12,7 +12,7 @@ import 'package:audio_session/audio_session.dart';
 import 'package:flutter_media_notification/flutter_media_notification.dart';
 import 'themes.dart';
 
-final NowPlaying player = NowPlaying();
+// final NowPlaying player = NowPlaying();
 
 // void _myEntrypoint() =>
 //     AudioServiceBackground.run(() => BackgroundPlayer(nowPlaying));
@@ -42,7 +42,7 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  final NowPlaying nowPlaying = player;
+  final NowPlaying nowPlaying = NowPlaying();
 
   void configureAudio() async {
     AudioSession.instance.then((session) async {
@@ -118,11 +118,18 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return provider.MultiProvider(
       providers: [
-        provider.ChangeNotifierProvider<Library>(create: (_) => Library()),
-        provider.ChangeNotifierProvider<NowPlaying>(
-            create: (_) => this.nowPlaying),
+        provider.ChangeNotifierProvider<Library>(
+          create: (_) => Library(),
+        ),
+        provider.ChangeNotifierProvider.value(
+          value: this.nowPlaying,
+        ),
+        provider.ChangeNotifierProvider.value(
+          value: this.nowPlaying.progress,
+        ),
         provider.ChangeNotifierProvider<MenuProvider>(
-            create: (_) => MenuProvider()),
+          create: (_) => MenuProvider(),
+        ),
       ],
       child: MaterialApp(
         title: 'Rhythm',
