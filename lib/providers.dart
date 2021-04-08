@@ -502,7 +502,7 @@ class NowPlaying extends ChangeNotifier {
     if (empty)
       return 0;
     else
-      return exercise.duration;
+      return exerciseTimer.duration.inMilliseconds / 1000;
   }
 
   int get timerIndex {
@@ -542,9 +542,18 @@ class NowPlaying extends ChangeNotifier {
   int get currentRep {
     if (empty)
       return 0;
+    else if (exerciseTimer.ended)
+      return exercise.reps;
     else
-      return (progress.setPercent * exercise.reps + 0.5).floor();
+      return exerciseTimer.currentRep;
   }
+
+  // int get currentRep {
+  //   if (empty)
+  //     return 0;
+  //   else
+  //     return (progress.setPercent * exercise.reps + 0.5).floor();
+  // }
 
   bool get inReady {
     if (empty)
@@ -613,23 +622,17 @@ class NowPlaying extends ChangeNotifier {
   void updateTime() {
     if (exerciseTimer == null) return;
     // if (time == exerciseTimer.elapsedSeconds) return;
-    progress._time = exerciseTimer.elapsedSeconds;
-    progress._setTime = exerciseTimer.elapsedSubSeconds;
-    progress._percent = progress.time / duration;
-    var perc;
-    if (exerciseTimer.ended)
-      perc = 1.0;
-    else {
-      perc = progress.setTime / exercise.durations[timerIndex];
-      perc = perc > 1 ? 1 : perc;
-    }
-    progress._setPercent = perc;
+    progress._time = exerciseTimer.position.inMilliseconds / 1000;
+    progress._setTime = exerciseTimer.subPosition.inMilliseconds / 1000;
+    progress._percent = exerciseTimer.progress;
+    progress._setPercent = exerciseTimer.subProgress;
     // print('Time updated');
     // notifyListeners();
   }
 
   void _repStateUp() {
     repState = RepState.up;
+    // currentRep++;
     // audioPlayer1.seek(Duration(microseconds: 0));
     // audioPlayer1.play();
     notifyListeners();
@@ -655,8 +658,13 @@ class NowPlaying extends ChangeNotifier {
     print('Exercises: ' + plan.exerciseNames.toString());
     print('First exercise:' + plan.exercises.first.name);
     _exerciseIndex = 0;
-    exerciseTimer = ExerciseTimer(
-        exercise, updateTime, _repStateUp, _repStateDown, _repStateRest);
+    exerciseTimer = ExerciseTimer(exercise,
+        doAfterToc: _repStateUp,
+        doAfterTic: _repStateDown,
+        doWhenRest: _repStateRest);
+    exerciseTimer.addListener(() {
+      notifyListeners();
+    });
     exerciseTimer.play();
     print('changedPlan');
     // startAudioService();
@@ -674,10 +682,15 @@ class NowPlaying extends ChangeNotifier {
   void skipForward() {
     if (!isLast) {
       bool wasPlaying = playing;
-      exerciseTimer.cancel();
+      exerciseTimer.dispose();
       _exerciseIndex = _exerciseIndex + 1;
-      exerciseTimer = ExerciseTimer(
-          exercise, updateTime, _repStateUp, _repStateDown, _repStateRest);
+      exerciseTimer = ExerciseTimer(exercise,
+          doAfterToc: _repStateUp,
+          doAfterTic: _repStateDown,
+          doWhenRest: _repStateRest);
+      exerciseTimer.addListener(() {
+        notifyListeners();
+      });
       if (wasPlaying) exerciseTimer.play();
       notifyListeners();
       updateTime();
@@ -697,10 +710,15 @@ class NowPlaying extends ChangeNotifier {
     if (!isFirst) {
       print('skipped to previous');
       bool wasPlaying = playing;
-      exerciseTimer.cancel();
+      exerciseTimer.dispose();
       _exerciseIndex = _exerciseIndex - 1;
-      exerciseTimer = ExerciseTimer(
-          exercise, updateTime, _repStateUp, _repStateDown, _repStateRest);
+      exerciseTimer = ExerciseTimer(exercise,
+          doAfterToc: _repStateUp,
+          doAfterTic: _repStateDown,
+          doWhenRest: _repStateRest);
+      exerciseTimer.addListener(() {
+        notifyListeners();
+      });
       updateTime();
       if (wasPlaying) exerciseTimer.play();
       notifyListeners();
@@ -710,7 +728,7 @@ class NowPlaying extends ChangeNotifier {
   void skipPrevious() {
     if (progress.time < 1 && !isFirst) {
       skipBackward();
-      for (var i = 0; i < exerciseTimer.timers.length - 1; i++) skipNext();
+      for (var i = 0; i < exerciseTimer.numBeepers - 1; i++) skipNext();
     } else {
       exerciseTimer.skipPrevious();
       updateTime();
@@ -764,7 +782,7 @@ class NowPlaying extends ChangeNotifier {
     MediaNotification.hideNotification();
     if (plan != null) {
       if (exerciseTimer != null) {
-        exerciseTimer.cancel();
+        exerciseTimer.dispose();
         exerciseTimer = null;
         repState = RepState.rest;
       }

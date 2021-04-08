@@ -226,7 +226,7 @@ class ExerciseTile extends StatelessWidget {
   final Function() onTap;
 
   String get tileDuration {
-    return Duration(seconds: exercise.duration.round()).minutesSeconds();
+    return exercise.duration.minutesSeconds();
   }
 
   String get tileTitle {
@@ -766,7 +766,9 @@ class _TimerIndicatorState extends State<TimerIndicator> {
                                   Padding(
                                     padding: const EdgeInsets.all(4.0),
                                     child: Text(
-                                      nowPlaying.inSet
+                                      (nowPlaying.inSet &&
+                                              nowPlaying.currentRep <=
+                                                  nowPlaying.exercise.reps)
                                           ? nowPlaying.currentRep
                                               .pluralString('rep')
                                           : 'Done',

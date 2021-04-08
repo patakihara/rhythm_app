@@ -296,6 +296,9 @@ class Exercise implements Data {
   final List<num> _durations = <num>[];
   final List<int> _setNums = <int>[];
   final List<ExercisePhase> _phases = <ExercisePhase>[];
+
+  Duration _duration;
+
   Library parent;
   String key;
 
@@ -349,31 +352,34 @@ class Exercise implements Data {
     return !upFirst;
   }
 
-  num get secsActive {
-    // var extra;
-    // if (upFirst)
-    //   extra = secsDown;
-    // else
-    //   extra = secsUp;
-    return reps * (secsUp + secsDown);
+  // num get secsActive {
+  //   // var extra;
+  //   // if (upFirst)
+  //   //   extra = secsDown;
+  //   // else
+  //   //   extra = secsUp;
+  //   return reps * (secsUp + secsDown) + 2;
+  // }
+
+  Duration get duration {
+    if (_duration != null) return _duration;
+    _duration = ExerciseDurations.whole(
+        reps, sets, secsUp, secsDown, secsRest, secsStart);
+    return _duration;
   }
 
-  num get duration {
-    return (sets * secsStart + sets * secsActive + (sets - 1) * secsRest);
-  }
-
-  List<num> get durations {
-    if (_durations.isEmpty) {
-      for (var i = 0; i < sets - 1; i++) {
-        _durations.add(secsStart);
-        _durations.add(secsActive);
-        _durations.add(secsRest);
-      }
-      _durations.add(secsStart);
-      _durations.add(secsActive);
-    }
-    return _durations;
-  }
+  // List<num> get durations {
+  //   if (_durations.isEmpty) {
+  //     for (var i = 0; i < sets - 1; i++) {
+  //       _durations.add(secsStart);
+  //       _durations.add(secsActive);
+  //       _durations.add(secsRest);
+  //     }
+  //     _durations.add(secsStart);
+  //     _durations.add(secsActive);
+  //   }
+  //   return _durations;
+  // }
 
   List<ExercisePhase> get phases {
     if (_phases.isEmpty) {
@@ -402,9 +408,57 @@ class Exercise implements Data {
   }
 }
 
+class ExerciseDurations {
+  static Duration whole(int reps, int sets, num secsUp, num secsDown,
+      num secsRest, num secsStart) {
+    var result = Duration.zero;
+    result += readyBeeper(secsStart.toDuration());
+    result += metronome(reps, secsUp.toDuration(), secsDown.toDuration());
+    for (var i = 0; i < sets - 1; i++) {
+      result += restBeeper(secsRest.toDuration());
+      result += readyBeeper(secsStart.toDuration());
+      result += metronome(reps, secsUp.toDuration(), secsDown.toDuration());
+    }
+    return result;
+  }
+
+  static Duration metronome(int numCycles, Duration ticTime, Duration tocTime) {
+    Duration result = Duration.zero;
+    result += metronomeStartDuration;
+    for (var i = 0; i < numCycles - 1; i++) {
+      result += ticTime + tocTime;
+    }
+    result += ticTime;
+    result += finishDuration;
+    result += metronomeEndDuration;
+    return result;
+  }
+
+  static Duration readyBeeper(Duration duration) => duration;
+
+  static Duration restBeeper(Duration duration) => duration;
+
+  /// [Metronome] durations
+  static Duration metronomeStartDuration = Duration(milliseconds: 1000);
+  static Duration tictocDuration = Duration(milliseconds: 600);
+  static Duration finishDuration = Duration(milliseconds: 1428);
+  static Duration metronomeEndDuration = Duration(milliseconds: 500);
+
+  /// [ReadyBeeper] durations
+  static Duration readyBeeperEndDuration = Duration(milliseconds: 100);
+  static Duration shortBeepDuration = Duration(milliseconds: 1288);
+  static Duration longBeepDuration = Duration(milliseconds: 1560);
+
+  /// [RestBeeper] durations
+  static Duration restBeeperEndDuration = Duration(milliseconds: 100);
+  static Duration beepDuration = Duration(milliseconds: 2000);
+}
+
 enum ExercisePhase { ready, active, rest, end }
 
 extension NumberParsing on num {
+  Duration toDuration() => Duration(microseconds: (this * 1000000).round());
+
   String pluralString(String s) {
     if (this != 1)
       return this.toString() + ' ' + s + 's';
@@ -442,211 +496,164 @@ extension DurationParsing on Duration {
   }
 }
 
-class TimeCounter {
-  Timer timer;
-  // Ticker ticker;
-  Stopwatch stopwatch = Stopwatch();
-  final Duration duration;
-  bool running = false;
-  void Function() callback;
-  void Function() onTick;
-  int _accumMicroseconds = 0;
+class ExerciseTimer extends ChangeNotifier {
+  final Exercise exercise;
+  final int numBeepers;
 
-  TimeCounter(this.duration, this.callback, this.onTick) {
-    // ticker = Ticker((_) => onTick);
-  }
-
-  int get elapsedTicks {
-    return stopwatch.elapsedTicks;
-  }
-
-  double get elapsedSeconds {
-    return _elapsedMicroseconds / 1000000;
-  }
-
-  int get _elapsedMicroseconds {
-    var res = stopwatch.elapsedMicroseconds + _accumMicroseconds;
-    if (res > duration.inMicroseconds)
-      return duration.inMicroseconds;
-    else
-      return res;
-  }
-
-  // set elapsedSeconds(num seconds) {
-  //   stopwatch.reset();
-  //   _accumMicroseconds = (seconds * 1000000).round();
-  //   if (running) {
-  //     timer = Timer(
-  //         Duration(
-  //             microseconds: duration.inMicroseconds - _elapsedMicroseconds),
-  //         end);
-  //   }
-  // }
-
-  void start() {
-    timer = Timer(
-        Duration(microseconds: duration.inMicroseconds - _elapsedMicroseconds),
-        end);
-    // ticker.start();
-    stopwatch.start();
-    running = true;
-  }
-
-  void reset() {
-    stopwatch.reset();
-    if (timer != null) timer.cancel();
-    if (running)
-      timer = Timer(
-          Duration(
-              microseconds: duration.inMicroseconds - _elapsedMicroseconds),
-          end);
-  }
-
-  void stop() {
-    stopwatch.stop();
-    // ticker.stop();
-    if (timer != null) timer.cancel();
-    running = false;
-  }
-
-  void end() {
-    callback();
-    stop();
-  }
-}
-
-class ExerciseTimer {
-  Exercise exercise;
-  int index = 0;
-  // num accumSeconds = 0;
-  bool playing = false;
-  bool ended = false;
-  final List<TimeCounter> timers = [];
-  void Function() tickerCallback;
   Metronome metronome;
   ReadyBeeper readyBeeper;
   RestBeeper restBeeper;
-  final void Function() doWhenMoveDown;
-  final void Function() doWhenMoveUp;
+  final void Function() doAfterToc;
+  final void Function() doAfterTic;
   final void Function() doWhenRest;
 
-  get accumSeconds {
-    return index == 0
-        ? 0
-        : exercise._durations
-            .sublist(0, index)
-            .reduce((value, element) => value + element);
+  int _index = 0;
+  bool _playing = false;
+  bool _ended = false;
+
+  int get index => _index;
+  bool get playing => _playing;
+  bool get ended => _ended;
+
+  set index(int value) {
+    _index = value;
+    notifyListeners();
   }
 
-  ExerciseTimer(this.exercise, this.tickerCallback, this.doWhenMoveDown,
-      this.doWhenMoveUp, this.doWhenRest) {
-    for (var i = 0; i < exercise.durations.length; i++) {
-      timers.add(TimeCounter(
-        Duration(microseconds: (exercise.durations[i] * 1000000).round()),
-        _nextTimer,
-        tickerCallback,
-      ));
-    }
-    if (exercise.upFirst)
-      metronome = Metronome(
-        exercise.secsUp,
-        exercise.secsDown,
-        exercise.reps,
-        beat1: doWhenMoveDown,
-        beat2: doWhenMoveUp,
-        beatReset: doWhenRest,
-      );
+  set playing(bool value) {
+    _playing = value;
+    notifyListeners();
+  }
+
+  set ended(bool value) {
+    _ended = value;
+    notifyListeners();
+  }
+
+  ExercisePhase get currentPhase => exercise.phases[index];
+
+  Beeper get currentBeeper {
+    return beeperAt(index);
+  }
+
+  Beeper beeperAt(int i) {
+    if (exercise.phases[i] == ExercisePhase.active)
+      return metronome;
+    else if (exercise.phases[i] == ExercisePhase.ready)
+      return readyBeeper;
+    else if (exercise.phases[i] == ExercisePhase.rest)
+      return restBeeper;
     else
-      metronome = Metronome(
-        exercise.secsDown,
-        exercise.secsUp,
-        exercise.reps,
-        beat1: doWhenMoveUp,
-        beat2: doWhenMoveDown,
-        beatReset: doWhenRest,
-      );
-    readyBeeper = ReadyBeeper(exercise.secsStart.toDouble());
-    restBeeper = RestBeeper(exercise.secsRest.toDouble());
+      return null;
+  }
+
+  ExerciseTimer(this.exercise,
+      {this.doAfterToc, this.doAfterTic, this.doWhenRest})
+      : numBeepers = exercise.phases.length {
+    metronome = Metronome(
+      Duration(milliseconds: (exercise.secsUp * 1000).round()),
+      Duration(milliseconds: (exercise.secsDown * 1000).round()),
+      exercise.reps,
+      onToc: doAfterToc,
+      onTic: doAfterTic,
+      onReset: doWhenRest,
+      onEnd: _nextTimer,
+    );
+    readyBeeper = ReadyBeeper(
+      Duration(milliseconds: (exercise.secsStart * 1000).round()),
+      onEnd: _nextTimer,
+    );
+    restBeeper = RestBeeper(
+      Duration(milliseconds: (exercise.secsRest * 1000).round()),
+      onEnd: _nextTimer,
+    );
+  }
+
+  Duration get position {
+    var result = Duration.zero;
+    for (var i = 0; i < index; i++) {
+      result += beeperAt(i).duration;
+    }
+    result += currentBeeper.position ?? Duration.zero;
+    return result;
+  }
+
+  Duration get duration {
+    var result = Duration.zero;
+    for (var i = 0; i < numBeepers; i++) {
+      result += beeperAt(i).duration;
+    }
+    return result;
+  }
+
+  double get progress => (position.inMilliseconds / duration.inMilliseconds)
+      .toDouble()
+      .clamp(0.0, 1.0);
+
+  Duration get subPosition => currentBeeper.position;
+
+  Duration get subDuration => currentBeeper.duration;
+
+  double get subProgress => currentBeeper.progress;
+
+  int get currentRep {
+    if (currentBeeper is Metronome)
+      return metronome.currentCycle;
+    else
+      return 0;
   }
 
   void play() {
     assert(!ended, 'Exercise timer ended, must reset before starting.');
-    timers[index].start();
     playing = true;
-    if (exercise.phases[index] == ExercisePhase.active)
-      metronome.start();
-    else if (exercise.phases[index] == ExercisePhase.ready)
-      readyBeeper.start();
-    else if (exercise.phases[index] == ExercisePhase.rest) restBeeper.start();
+    print('exercise timer playing');
+    currentBeeper.play();
+    notifyListeners();
   }
 
   void pause() {
-    if (index < timers.length) timers[index].stop();
-    metronome.stop();
-    readyBeeper.stop();
-    restBeeper.stop();
+    currentBeeper.pause();
     playing = false;
+    notifyListeners();
   }
 
   void _nextTimer() {
-    if (index < timers.length) {
-      timers[index].stop();
-      timers[index].reset();
-      metronome.stop();
-      metronome.reset();
-      readyBeeper.stop();
-      readyBeeper.reset();
-      restBeeper.stop();
-      restBeeper.reset();
+    if (index == numBeepers - 1) {
+      pause();
+      ended = true;
+    } else if (index < numBeepers - 1) {
+      currentBeeper.pause();
+      currentBeeper.reset();
       index++;
     }
-    if (index < timers.length) {
+    if (index < numBeepers) {
       if (!playing) return;
-      timers[index].start();
-      if (exercise.phases[index] == ExercisePhase.active)
-        metronome.start();
-      else if (exercise.phases[index] == ExercisePhase.ready)
-        readyBeeper.start();
-      else if (exercise.phases[index] == ExercisePhase.rest) restBeeper.start();
-    } else {
-      ended = true;
-      pause();
+      currentBeeper.play();
     }
+    notifyListeners();
   }
 
   // doens't pause
   void _resetTimer() {
-    if (index < timers.length) timers[index].reset();
-    metronome.reset();
-    readyBeeper.reset();
-    restBeeper.reset();
+    currentBeeper.reset();
+    notifyListeners();
   }
 
   // resets if at first
   void _previousTimer() {
     ended = false;
-    if (index < timers.length) {
-      timers[index].stop();
-      timers[index].reset();
-      metronome.stop();
-      metronome.reset();
-      readyBeeper.stop();
-      readyBeeper.reset();
-      restBeeper.stop();
-      restBeeper.reset();
+    if (index < numBeepers) {
+      currentBeeper.pause();
+      currentBeeper.reset();
     }
     // } else {
     //   ended = false;
     // }
     if (index > 0) index--;
     if (playing) {
-      timers[index].start();
-      if (exercise.phases[index] == ExercisePhase.active)
-        metronome.start();
-      else if (exercise.phases[index] == ExercisePhase.ready)
-        readyBeeper.start();
-      else if (exercise.phases[index] == ExercisePhase.rest) restBeeper.start();
+      currentBeeper.play();
     }
+    notifyListeners();
   }
 
   void skipNext() {
@@ -654,474 +661,466 @@ class ExerciseTimer {
   }
 
   void skipPrevious() {
-    if (index < timers.length && timers[index].elapsedSeconds > 2)
+    if (index < numBeepers && currentBeeper.position > Duration(seconds: 2))
       _resetTimer();
     else
       _previousTimer();
   }
 
-  num get elapsedSubSeconds {
-    if (index == timers.length)
-      return exercise.durations.last;
-    else
-      return timers[index].elapsedSeconds;
-  }
-
-  num get elapsedSeconds {
-    if (index == timers.length)
-      return accumSeconds;
-    else {
-      var res = accumSeconds + timers[index].elapsedSeconds;
-      if (res > exercise.duration) {
-        return exercise.duration;
-      } else {
-        return res;
-      }
-    }
-  }
-
-  void cancel() {
+  @override
+  void dispose() {
     index = 0;
     playing = false;
     ended = true;
-    for (var i = 0; i < timers.length; i++) {
-      timers[i].stop();
-      timers[i].reset();
-    }
-    metronome.stop();
-    metronome.reset();
-    readyBeeper.stop();
-    readyBeeper.reset();
-    restBeeper.stop();
-    restBeeper.reset();
+    currentBeeper.pause();
+    currentBeeper.reset();
+    metronome.dispose();
+    readyBeeper.dispose();
+    restBeeper.dispose();
+    notifyListeners();
+    removeListener(() {});
+    super.dispose();
   }
 }
 
-abstract class SoundTicker {
-  Stopwatch stopwatch;
-  bool running;
-  void start();
-  void stop();
-  void reset();
-  void setUpPlayers();
-}
+abstract class Beeper {
+  bool get running => _running;
 
-class Metronome implements SoundTicker {
-  final num dur1;
-  final num dur2;
-  final int totalCycles;
-  int _currentCycle = 0;
-  Stopwatch stopwatch = Stopwatch();
-  num duration;
-  Timer timer1;
-  Timer timer2;
-  Timer timerFinish;
-  bool running = false;
-  bool _playersSetUp = false;
-  void Function() beat1;
-  void Function() beat2;
-  void Function() beatReset;
-  int sourcesLength;
+  Duration get duration =>
+      durations.reduce((value, element) => value + element);
 
-  Metronome(this.dur1, this.dur2, this.totalCycles,
-      {this.beat1, this.beat2, this.beatReset}) {
-    sourcesLength = totalCycles * 4 + 1;
-    duration = totalCycles * (dur1 + dur2);
-    if (beat1 == null) {
-      beat1 = () {};
-    }
-    if (beat2 == null) {
-      beat2 = () {};
-    }
-    if (beatReset == null) {
-      beatReset = () {};
-    }
-    setUpPlayers();
+  Duration get position {
+    if (disposed) return duration;
+    return (audioIndex > 0
+            ? durations
+                .sublist(0, audioIndex)
+                .reduce((value, element) => value + element)
+            : Duration.zero) +
+        (audioPlayer.position ?? Duration.zero);
   }
 
-  // if using just_audio
-  final audioPlayer1 = AudioPlayer(handleInterruptions: true);
-  final audioPlayer2 = AudioPlayer(handleInterruptions: true);
-  final audioPlayerFinish = AudioPlayer(handleInterruptions: true);
-  final audioPlayerWhole = AudioPlayer(handleInterruptions: true);
+  double get progress => (position.inMicroseconds / duration.inMicroseconds)
+      .toDouble()
+      .clamp(0, 1)
+      .toDouble();
 
-  void setUpPlayers() async {
-    if (!_playersSetUp) {
-      await audioPlayer1.setAsset('assets/notification_high-intensity.wav');
-      await audioPlayer2.setAsset('assets/notification_decorative-01.wav');
-      await audioPlayerFinish.setAsset('assets/hero_simple-celebration-03.wav');
-      await audioPlayer1.setVolume(1);
-      await audioPlayer2.setVolume(1);
-      await audioPlayerFinish.setVolume(1);
-      await audioPlayerWhole.setAudioSource(
-        ConcatenatingAudioSource(
-          children: audioSources,
-        ),
-      );
-      // await audioPlayerWhole.setLoopMode(LoopMode.off);
-      // audioPlayerWhole.processingStateStream.listen((event) {
-      //   if (event == ProcessingState.completed) audioPlayerWhole.pause();
-      // });
-      await audioPlayerWhole.setVolume(1);
-      _playersSetUp = true;
-    }
-  }
+  final audioPlayer = AudioPlayer(
+    handleInterruptions: false,
+    handleAudioSessionActivation: false,
+    androidApplyAudioAttributes: false,
+  );
+
+  final void Function() onEnd;
+  final void Function() onReset;
+
+  bool _playerSetUp = false;
+  bool _sourcesSetUp = false;
+
+  bool _running = false;
+
+  StreamSubscription<ProcessingState> _playerStateSubscription;
+
+  int get audioIndex => audioPlayer.currentIndex;
+  int get audioLength => audioSources.length;
 
   List<AudioSource> get audioSources {
-    var list = <AudioSource>[];
+    setUpSources();
+    return _audioSources;
+  }
 
-    var beat2Source =
+  final List<AudioSource> _audioSources = <AudioSource>[];
+
+  List<Duration> get durations {
+    setUpSources();
+    return _durations;
+  }
+
+  final List<Duration> _durations = <Duration>[];
+
+  Beeper({
+    void Function() onReset,
+    void Function() onEnd,
+  })  : this.onReset = onReset ?? (() {}),
+        this.onEnd = onEnd ?? (() {}) {
+    setUpSources();
+    setUpPlayer();
+    setUpSubscription();
+  }
+
+  void setUpPlayer() async {
+    if (_playerSetUp) return;
+
+    await audioPlayer.setAudioSource(
+      ConcatenatingAudioSource(
+        children: audioSources,
+        useLazyPreparation: false,
+      ),
+    );
+    await audioPlayer.setVolume(1);
+
+    _playerSetUp = true;
+  }
+
+  void setUpSubscription() {
+    if (_playerStateSubscription != null) return;
+    _playerStateSubscription =
+        audioPlayer.processingStateStream.listen(stateListener);
+  }
+
+  void stateListener(ProcessingState state) {
+    if (state == ProcessingState.completed) {
+      audioPlayer.stop();
+      _playerStateSubscription.pause();
+      onEnd();
+    }
+  }
+
+  void setUpSources() {
+    if (_sourcesSetUp) return;
+    _sourcesSetUp = true;
+  }
+
+  void play() {
+    assert(!disposed, '$typeName has been disposed, cannot play');
+    print('$typeName started');
+    setUpPlayer();
+    _running = true;
+    audioPlayer.play();
+  }
+
+  void pause() async {
+    assert(!disposed, '$typeName has been disposed, cannot pause');
+    audioPlayer.pause();
+    _running = false;
+    print('$typeName stopped');
+  }
+
+  void reset() {
+    assert(!disposed, '$typeName has been disposed, cannot reset');
+    print('$typeName reset');
+    if (progress > 0) audioPlayer.seek(Duration(seconds: 0), index: 0);
+    audioPlayer.pause();
+    if (running) {
+      audioPlayer.play();
+    }
+    _playerStateSubscription.resume();
+    onReset();
+  }
+
+  bool disposed = false;
+
+  void dispose() {
+    disposed = true;
+    audioPlayer.stop();
+    audioPlayer.dispose();
+  }
+
+  final String typeName = 'Beeper';
+}
+
+class Metronome extends Beeper {
+  final Duration ticDuration;
+  final Duration tocDuration;
+  final int totalCycles;
+
+  int _currentCycle = 0;
+  int get currentCycle => _currentCycle;
+
+  final void Function() onToc;
+  final void Function() onTic;
+
+  List<int> _ticIndices = [];
+  List<int> _tocIndices = [];
+  List<int> _finishIndices = [];
+
+  Metronome(
+    this.tocDuration,
+    this.ticDuration,
+    this.totalCycles, {
+    void Function() onTic,
+    void Function() onToc,
+    void Function() onReset,
+    void Function() onEnd,
+  })  : this.onTic = onTic ?? (() {}),
+        this.onToc = onToc ?? (() {}),
+        super(onReset: onReset, onEnd: onEnd) {
+    setUpPlayer();
+  }
+
+  @override
+  void setUpPlayer() async {
+    if (_playerSetUp) return;
+
+    await audioPlayer.setAudioSource(
+      ConcatenatingAudioSource(
+        children: audioSources,
+        useLazyPreparation: false,
+      ),
+    );
+    await audioPlayer.setVolume(1);
+
+    audioPlayer.currentIndexStream.listen((index) {
+      doWhenIndex(index);
+    });
+
+    _playerSetUp = true;
+  }
+
+  @override
+  void setUpSources() {
+    if (_sourcesSetUp) return;
+
+    final startDur = ExerciseDurations.metronomeStartDuration;
+    final tictocDur = ExerciseDurations.tictocDuration;
+    final finishDur = ExerciseDurations.finishDuration;
+    final endDur = ExerciseDurations.metronomeEndDuration;
+
+    final ticSource =
         AudioSource.uri(Uri.parse('asset:///assets/drumsticks.mp3'));
-    var beat1Source =
+    final tocSource =
         AudioSource.uri(Uri.parse('asset:///assets/woodblock.mp3'));
-    var silenceSource =
+    final silenceSource =
         AudioSource.uri(Uri.parse('asset:///assets/silence.mp3'));
-    var finishSource = AudioSource.uri(
+    final finishSource = AudioSource.uri(
         Uri.parse('asset:///assets/hero_simple-celebration-03.wav'));
 
-    for (var i = 0; i < totalCycles; i++) {
-      list.add(beat2Source);
-      list.add(
+    _audioSources.add(
+      ClippingAudioSource(
+        child: silenceSource,
+        end: startDur,
+      ),
+    );
+    _durations.add(startDur);
+
+    for (var i = 0; i < totalCycles - 1; i++) {
+      _ticIndices.add(_audioSources.length);
+      _audioSources.add(
         ClippingAudioSource(
-          child: silenceSource,
-          start: Duration(milliseconds: 0),
-          end: Duration(milliseconds: (dur1 * 1000).round()) -
-              Duration(milliseconds: 600),
+          child: ticSource,
+          end: tictocDur,
         ),
       );
-      list.add(beat1Source);
-      list.add(
+      _durations.add(tictocDur);
+
+      _audioSources.add(
         ClippingAudioSource(
           child: silenceSource,
-          start: Duration(milliseconds: 0),
-          end: Duration(milliseconds: (dur2 * 1000).round()) -
-              Duration(milliseconds: 672),
+          end: ticDuration - tictocDur,
         ),
       );
+      _durations.add(ticDuration - tictocDur);
+
+      _tocIndices.add(_audioSources.length);
+      _audioSources.add(
+        ClippingAudioSource(
+          child: tocSource,
+          end: tictocDur,
+        ),
+      );
+      _durations.add(tictocDur);
+
+      _audioSources.add(
+        ClippingAudioSource(
+          child: silenceSource,
+          end: tocDuration - tictocDur,
+        ),
+      );
+      _durations.add(tocDuration - tictocDur);
     }
-    list.add(finishSource);
-    return list;
+
+    _ticIndices.add(_audioSources.length);
+    _audioSources.add(
+      ClippingAudioSource(
+        child: ticSource,
+        end: tictocDur,
+      ),
+    );
+    _durations.add(tictocDur);
+
+    _audioSources.add(
+      ClippingAudioSource(
+        child: silenceSource,
+        end: ticDuration - tictocDur,
+      ),
+    );
+    _durations.add(ticDuration - tictocDur);
+
+    _tocIndices.add(_audioSources.length);
+    _audioSources.add(
+      ClippingAudioSource(
+        child: finishSource,
+        end: finishDur,
+      ),
+    );
+    _durations.add(finishDur);
+
+    _finishIndices.add(_audioSources.length);
+    _audioSources.add(
+      ClippingAudioSource(
+        child: silenceSource,
+        end: endDur,
+      ),
+    );
+    _durations.add(endDur);
+
+    _sourcesSetUp = true;
   }
 
-  // // if using sounds
-  // Track tick1 = Track.fromAsset('assets/woodblock.mp3');
-  // Track tick2 = Track.fromAsset('assets/drumsticks.mp3');
-  // Track tickFinish = Track.fromAsset('assets/hero_simple-celebration-03.wav');
+  int _lastIndex = -1;
 
-  void start() {
-    print('Metronome started');
-    setUpPlayers();
-    running = true;
-    var time = stopwatch.elapsedMicroseconds / 1000000;
-    time = time % (dur1 + dur2);
-    stopwatch.start();
-    audioPlayerWhole.play();
-    if (time == 0) {
-      _beat2();
-    }
-    if (time <= dur1) {
-      _startTimer1(skip: time);
-    } else {
-      _startTimer2(skip: time - dur1);
+  void doWhenIndex(index) {
+    if (_lastIndex != index) {
+      if (_ticIndices.contains(index)) {
+        onTic();
+      } else if (_tocIndices.contains(index)) {
+        onToc();
+        _currentCycle++;
+      }
+      if (_finishIndices.contains(index)) {
+        _currentCycle++;
+      }
+      _lastIndex = index;
     }
   }
 
-  void stop() async {
-    if (timer1 != null) timer1.cancel();
-    if (timer2 != null) timer2.cancel();
-    stopwatch.stop();
-    if (audioPlayerWhole.currentIndex != null &&
-        audioPlayerWhole.currentIndex < sourcesLength - 2)
-      audioPlayerWhole.pause();
-    running = false;
-    await AudioSession.instance
-        .then((session) async => await session.setActive(false));
-    print('Metronome stopped');
-  }
-
+  @override
   void reset() {
-    if (timer1 != null) timer1.cancel();
-    if (timer2 != null) timer2.cancel();
-    stopwatch.reset();
-    audioPlayerWhole.seek(Duration(seconds: 0), index: 0);
-    audioPlayerWhole.pause();
+    super.reset();
     _currentCycle = 0;
-    beatReset();
-    print('Metronome reset');
-    if (running) {
-      audioPlayerWhole.play();
-      var time = stopwatch.elapsedMicroseconds / 1000000;
-      time = time % (dur1 + dur2);
-      if (time == 0) {
-        _beat2();
-      }
-      if (time <= dur1) {
-        _startTimer1(skip: time);
-      } else {
-        _startTimer2(skip: time - dur1);
-      }
-    }
   }
 
-  void _startTimer1({num skip = 0}) {
-    if (_currentCycle < totalCycles)
-      timer1 = Timer(Duration(microseconds: ((dur1 - skip) * 1000000).round()),
-          _callback1);
-    else {
-      stop();
-      reset();
-    }
-  }
-
-  void _startTimer2({num skip = 0}) {
-    if (_currentCycle < totalCycles - 1)
-      timer2 = Timer(Duration(microseconds: ((dur2 - skip) * 1000000).round()),
-          _callback2);
-    else if (_currentCycle == totalCycles - 1)
-      timerFinish = Timer(
-          Duration(microseconds: ((dur2) * 1000000).round()), _beatFinish);
-    else {
-      stop();
-      reset();
-    }
-  }
-
-  void _callback1() {
-    _beat1();
-    _startTimer2();
-  }
-
-  void _callback2() {
-    _beat2();
-    _currentCycle = _currentCycle + 1;
-    _startTimer1();
-  }
-
-  void _beat1() {
-    print('beat1');
-    // if using just_audio
-    // audioPlayer1.seek(Duration(microseconds: 0));
-    // audioPlayer1.play().then((_) => audioPlayer1.stop());
-
-    // // if using sounds
-    // QuickPlay.fromTrack(tick1);
-    beat1();
-  }
-
-  void _beat2() {
-    print('beat2');
-    // if usign just audio
-    // audioPlayer2.seek(Duration(microseconds: 0));
-    // audioPlayer2.play().then((_) => audioPlayer2.stop());
-
-    // // if using sounds
-    // QuickPlay.fromTrack(tick2);
-    beat2();
-  }
-
-  void _beatFinish() {
-    print('beatFinish');
-    // if using just_audio
-    // audioPlayerFinish.seek(Duration(microseconds: 0));
-    // audioPlayerFinish.play().then((_) => audioPlayerFinish.stop2());
-
-    // audioPlayerFinish.dispose();
-    // audioPlayer1.dispose();
-    // audioPlayer2.dispose();
-    // // if using sounds
-    // QuickPlay.fromTrack(tickFinish);
-  }
+  @override
+  final String typeName = 'Metronome';
 }
 
-class ReadyBeeper implements SoundTicker {
-  @override
-  Stopwatch stopwatch = Stopwatch();
-  final double duration;
-  final double shortDuration;
-  final double endDuration;
-  double longDuration;
-  Timer longTimer;
-  Timer shortTimer;
-  int currentIndex = 0;
-  bool running;
-  bool _playersSetUp = false;
+class ReadyBeeper extends Beeper {
+  final Duration inputDuration;
 
-  ReadyBeeper(this.duration, {this.shortDuration = 1.0, this.endDuration = 2}) {
-    longDuration = duration - endDuration - shortDuration * 2;
-  }
-
-  final List<AudioPlayer> audioPlayers = [
-    AudioPlayer(handleInterruptions: false),
-    AudioPlayer(handleInterruptions: false),
-    AudioPlayer(handleInterruptions: false)
-  ];
-
-  final List<String> soundAssets = [
-    'assets/notification_high-intensity.wav',
-    'assets/notification_high-intensity.wav',
-    'assets/notification_decorative-01.wav'
-  ];
+  ReadyBeeper(Duration duration, {void Function() onEnd})
+      : this.inputDuration = duration,
+        super(onEnd: onEnd);
 
   @override
-  void setUpPlayers() async {
-    if (_playersSetUp) return;
-    for (var i = 0; i < audioPlayers.length; i++) {
-      await audioPlayers[i].setAsset(soundAssets[i]);
-      await audioPlayers[i].setVolume(3);
-    }
-    _playersSetUp = true;
+  void setUpSources() {
+    if (_sourcesSetUp) return;
+
+    final Duration endDur = ExerciseDurations.readyBeeperEndDuration;
+    final Duration shortDur = ExerciseDurations.shortBeepDuration;
+    final Duration longDur = ExerciseDurations.longBeepDuration;
+    final Duration startDur = inputDuration - shortDur * 2 - longDur - endDur;
+
+    final silenceSource =
+        AudioSource.uri(Uri.parse('asset:///assets/silence.mp3'));
+    final shortSource = AudioSource.uri(
+        Uri.parse('asset:///assets/notification_high-intensity.wav'));
+    final longSource = AudioSource.uri(
+        Uri.parse('asset:///assets/notification_decorative-01.wav'));
+
+    _durations.add(startDur);
+    _durations.add(shortDur);
+    _durations.add(shortDur);
+    _durations.add(longDur);
+    _durations.add(endDur);
+
+    _audioSources.add(
+      ClippingAudioSource(
+        child: silenceSource,
+        end: startDur,
+      ),
+    );
+    _audioSources.add(
+      ClippingAudioSource(
+        child: shortSource,
+        end: shortDur,
+      ),
+    );
+    _audioSources.add(
+      ClippingAudioSource(
+        child: shortSource,
+        end: shortDur,
+      ),
+    );
+    _audioSources.add(
+      ClippingAudioSource(
+        child: longSource,
+        end: longDur,
+      ),
+    );
+    _audioSources.add(
+      ClippingAudioSource(
+        child: silenceSource,
+        end: endDur,
+      ),
+    );
+    _sourcesSetUp = true;
   }
 
-  @override
-  void start() {
-    setUpPlayers();
-    running = true;
-    var time = stopwatch.elapsedMicroseconds / 1000000;
-    stopwatch.start();
-    if (time < longDuration) {
-      _startLongTimer(skip: time);
-    } else {
-      time = (time - longDuration) % shortDuration;
-      _startShortTimer(skip: time);
-    }
-  }
-
-  @override
-  void stop() async {
-    if (shortTimer != null) shortTimer.cancel();
-    if (longTimer != null) longTimer.cancel();
-    stopwatch.stop();
-    running = false;
-    await AudioSession.instance
-        .then((session) async => await session.setActive(false));
-  }
-
-  @override
-  void reset() {
-    if (shortTimer != null) shortTimer.cancel();
-    if (longTimer != null) longTimer.cancel();
-    stopwatch.reset();
-    currentIndex = 0;
-    if (running) _startLongTimer();
-  }
-
-  _startLongTimer({double skip = 0}) {
-    longTimer = Timer(
-        Duration(microseconds: ((longDuration - skip) * 1000000).round()),
-        _callback);
-  }
-
-  _startShortTimer({double skip = 0}) {
-    if (currentIndex == 3) {
-      stop();
-      reset();
-      return;
-    }
-    shortTimer = Timer(
-        Duration(microseconds: ((shortDuration - skip) * 1000000).round()),
-        _callback);
-  }
-
-  void _callback() {
-    _beat();
-    currentIndex = currentIndex + 1;
-    _startShortTimer();
-  }
-
-  void _beat() {
-    audioPlayers[currentIndex].seek(Duration(microseconds: 0));
-    audioPlayers[currentIndex]
-        .play()
-        .then((_) => audioPlayers[currentIndex].stop2());
-  }
+  final String typeName = 'ReadyBeeper';
 }
 
-class RestBeeper implements SoundTicker {
-  @override
-  bool running;
-
-  @override
-  Stopwatch stopwatch = Stopwatch();
-  Timer timer;
-
-  final double duration;
-  final double endDuration;
-  double timerDuration;
-  bool _setUpPlayer = false;
-  bool _hasBeat = false;
-
-  RestBeeper(this.duration, {this.endDuration = 0.5}) {
-    timerDuration = duration - endDuration;
-  }
-
-  AudioPlayer audioPlayer = AudioPlayer(handleInterruptions: false);
-
+class RestBeeper extends Beeper {
   String soundAsset = 'assets/hero_decorative-celebration-01.wav';
 
-  @override
-  void setUpPlayers() async {
-    if (_setUpPlayer) return;
-    await audioPlayer.setAsset(soundAsset);
-    await audioPlayer.setVolume(3);
-    _setUpPlayer = true;
-  }
+  final Duration inputDuration;
+
+  RestBeeper(Duration duration, {void Function() onEnd})
+      : this.inputDuration = duration,
+        super(onEnd: onEnd);
 
   @override
-  void start() {
-    setUpPlayers();
-    running = true;
-    var time = stopwatch.elapsedMicroseconds / 1000000;
-    stopwatch.start();
-    _startTimer(skip: time);
+  void setUpSources() {
+    if (_sourcesSetUp) return;
+
+    final Duration endDur = ExerciseDurations.restBeeperEndDuration;
+    final Duration beepDur = ExerciseDurations.beepDuration;
+    final Duration startDur = inputDuration - beepDur - endDur;
+
+    final silenceSource =
+        AudioSource.uri(Uri.parse('asset:///assets/silence.mp3'));
+    final beepSource = AudioSource.uri(
+        Uri.parse('asset:///assets/hero_decorative-celebration-01.wav'));
+
+    _durations.add(startDur);
+    _durations.add(beepDur);
+    _durations.add(endDur);
+
+    _audioSources.add(
+      ClippingAudioSource(
+        child: silenceSource,
+        end: startDur,
+      ),
+    );
+    _audioSources.add(
+      ClippingAudioSource(
+        child: beepSource,
+        end: beepDur,
+      ),
+    );
+    _audioSources.add(
+      ClippingAudioSource(
+        child: silenceSource,
+        end: endDur,
+      ),
+    );
+    _sourcesSetUp = true;
   }
 
-  @override
-  void stop() async {
-    if (timer != null) timer.cancel();
-    running = false;
-    stopwatch.stop();
-    await AudioSession.instance
-        .then((session) async => await session.setActive(false));
-  }
-
-  @override
-  void reset() {
-    if (timer != null) timer.cancel();
-    stopwatch.reset();
-    _hasBeat = false;
-    if (running) {
-      _startTimer();
-    }
-  }
-
-  void _startTimer({double skip = 0}) {
-    if (_hasBeat) {
-      stop();
-      reset();
-      return;
-    }
-    timer = Timer(
-        Duration(microseconds: ((timerDuration - skip) * 1000000).round()),
-        _callback);
-  }
-
-  void _callback() {
-    _beat();
-    _hasBeat = true;
-  }
-
-  void _beat() {
-    audioPlayer.seek(Duration(milliseconds: 0));
-    audioPlayer.play().then((_) => audioPlayer.stop2());
-  }
+  final String typeName = 'RestBeeper';
 }
 
 enum RepState { up, down, rest, ready, end }
 
-extension ProperStopping on AudioPlayer {
-  Future<void> stop2() async {
-    this.stop();
-    await AudioSession.instance
-        .then((session) async => await session.setActive(false));
-  }
-}
+// extension ProperStopping on AudioPlayer {
+
+//   static AudioPlayer silentPlayer = AudioPlayer(handleAudioSessionActivation: )
+
+//   Future<void> play2() async {
+
+//   }
+
+//   Future<void> stop2() async {
+//     this.stop();
+//     await AudioSession.instance
+//         .then((session) async => await session.setActive(false));
+//   }
+// }
