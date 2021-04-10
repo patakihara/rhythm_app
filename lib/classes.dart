@@ -8,6 +8,7 @@ import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 // import 'package:sounds/sounds.dart';
 
 class LibraryManager<T extends Data> {
@@ -704,11 +705,7 @@ abstract class Beeper {
       .clamp(0, 1)
       .toDouble();
 
-  final audioPlayer = AudioPlayer(
-    handleInterruptions: false,
-    handleAudioSessionActivation: false,
-    androidApplyAudioAttributes: false,
-  );
+  AudioPlayer audioPlayer;
 
   final void Function() onEnd;
   final void Function() onReset;
@@ -747,8 +744,22 @@ abstract class Beeper {
     setUpSubscription();
   }
 
+  void getPlayer() async {
+    if (audioPlayer != null) return;
+    SharedPreferences preferences = await SharedPreferences.getInstance();
+    final duckAudio = preferences.getBool('duckAudio') ?? false;
+
+    audioPlayer = AudioPlayer(
+      handleInterruptions: false,
+      handleAudioSessionActivation: duckAudio,
+      androidApplyAudioAttributes: duckAudio,
+    );
+  }
+
   void setUpPlayer() async {
     if (_playerSetUp) return;
+
+    getPlayer();
 
     await audioPlayer.setAudioSource(
       ConcatenatingAudioSource(
@@ -843,13 +854,13 @@ class Metronome extends Beeper {
     void Function() onEnd,
   })  : this.onTic = onTic ?? (() {}),
         this.onToc = onToc ?? (() {}),
-        super(onReset: onReset, onEnd: onEnd) {
-    setUpPlayer();
-  }
+        super(onReset: onReset, onEnd: onEnd);
 
   @override
   void setUpPlayer() async {
     if (_playerSetUp) return;
+
+    super.getPlayer();
 
     await audioPlayer.setAudioSource(
       ConcatenatingAudioSource(
