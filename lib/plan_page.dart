@@ -20,17 +20,25 @@ class PlanPage extends StatefulWidget {
 }
 
 class _PlanPageState extends State<PlanPage> with TickerProviderStateMixin {
-  bool editing;
+  bool _editing;
+  bool _changed;
+  bool _deleting;
+
+  bool get editing => _editing;
+  bool get changed => _changed;
+  bool get deleting => _deleting;
+
   Plan plan;
 
   AnimationController appBarHeightController;
   ScrollController scrollController = ScrollController();
+  double lastAppBarHeightValue = 0;
 
   String name;
   List<String> exerciseNames;
 
   bool fromCard;
-  bool changed = false;
+  // bool changed = false;
   bool reorderable = false;
 
   bool _bottomVisibleAtStart;
@@ -106,8 +114,12 @@ class _PlanPageState extends State<PlanPage> with TickerProviderStateMixin {
   @override
   void initState() {
     plan = widget.plan;
-    editing = (widget.plan == null);
-    if (editing) changed = true;
+    _deleting = false;
+    _editing = (widget.plan == null);
+    if (editing)
+      _changed = true;
+    else
+      _changed = false;
     if (plan != null) {
       name = plan.name;
       exerciseNames = plan.exerciseNames.sublist(0);
@@ -157,10 +169,10 @@ class _PlanPageState extends State<PlanPage> with TickerProviderStateMixin {
   void updateChanged() {
     setState(() {
       if (plan != null) {
-        changed =
+        _changed =
             !listEquals(exerciseNames, plan.exerciseNames) || name != plan.name;
       } else
-        changed = true;
+        _changed = true;
     });
   }
 
@@ -189,27 +201,47 @@ class _PlanPageState extends State<PlanPage> with TickerProviderStateMixin {
           !nowPlaying.empty &&
           nowPlaying.plan.name == plan.name &&
           i < nowPlaying.exerciseIndex;
-      res.add(ExerciseTile(
-          key: keys[i],
-          exercise: exercises[i],
-          selected: currentlyPlaying() && !editing,
-          leading: SizedBox(
-            width: 72.0 - 32.0,
-          ),
-          onTap: () {
-            if (!editing) {
-              if (nowPlaying.empty || nowPlaying.plan.name != plan.name) {
-                nowPlaying.changePlan(plan);
-              }
-              if (!currentlyPlaying()) {
-                if (willPlayLater())
-                  while (!currentlyPlaying()) nowPlaying.skipForward();
-                else if (hasPlayedBefore())
-                  while (!currentlyPlaying()) nowPlaying.skipBackward();
-                nowPlaying.play();
-              }
-            }
-          }));
+      res.add(
+        editing
+            ? DismissibleExerciseTile(
+                key: keys[i],
+                exercise: exercises[i],
+                selected: currentlyPlaying() && !editing,
+                leading: SizedBox(
+                  width: 72.0 - 32.0,
+                ),
+                onTap: () {},
+                onDismissed: (_) {
+                  setState(() {
+                    exerciseNames.removeAt(i);
+                    keys.removeAt(i);
+                    updateChanged();
+                  });
+                },
+              )
+            : ExerciseTile(
+                key: keys[i],
+                exercise: exercises[i],
+                selected: currentlyPlaying() && !editing,
+                leading: SizedBox(
+                  width: 72.0 - 32.0,
+                ),
+                onTap: () {
+                  if (!editing) {
+                    if (nowPlaying.empty || nowPlaying.plan.name != plan.name) {
+                      nowPlaying.changePlan(plan);
+                    }
+                    if (!currentlyPlaying()) {
+                      if (willPlayLater())
+                        while (!currentlyPlaying()) nowPlaying.skipForward();
+                      else if (hasPlayedBefore())
+                        while (!currentlyPlaying()) nowPlaying.skipBackward();
+                      nowPlaying.play();
+                    }
+                  }
+                },
+              ),
+      );
     }
     if (editing) {
       res.add(Material(
@@ -366,36 +398,50 @@ class _PlanPageState extends State<PlanPage> with TickerProviderStateMixin {
   }
 
   Future<bool> onBackPressed() async {
-    if (plan == null || !editing) {
-      // if (fromCard)
-      // provider.Provider.of<MenuProvider>(context, listen: false).showNavBar =
-      // false;
-      context.read<MenuProvider>().showNavBar = true;
-      context.read<MenuProvider>().inPlanPage = false;
-      context.read<MenuProvider>().openPlan = null;
-      return !fromCard;
-    } else {
-      if (changed)
-        showDialog<bool>(
-            context: context,
-            builder: (context) {
-              return DiscardChangesDialog(context: context);
-            }).then((discard) {
-          if (discard)
-            setState(() {
-              editing = false;
-              appBarHeightController.fling(velocity: -1);
-              discardChanges();
-            });
-        });
-      else
-        setState(() {
-          editing = false;
-          appBarHeightController.fling(velocity: -1);
-        });
+    bool close = false;
 
-      return false;
+    if ((plan == null || !editing) && !deleting) {
+      close = true;
+    } else if (deleting) {
+      await showDialog<bool>(
+          context: context,
+          builder: (_) {
+            return DeleteDialog(context: context);
+          }).then((delete) {
+        setState(() {
+          _deleting = delete ?? false;
+        });
+      });
+      close = deleting;
+      if (deleting) context.read<Library>().removePlan(plan);
+    } else if (changed) {
+      await showDialog<bool>(
+          context: context,
+          builder: (_) {
+            return DiscardChangesDialog(context: context);
+          }).then((discard) {
+        if (discard)
+          setState(() {
+            _editing = false;
+            discardChanges();
+          });
+      });
+      close = false;
+    } else {
+      setState(() {
+        _editing = false;
+      });
+      close = false;
     }
+
+    if (close) closePage();
+    return false;
+  }
+
+  void closePage() {
+    context.read<MenuProvider>().showNavBar = true;
+    context.read<MenuProvider>().inPlanPage = false;
+    context.read<MenuProvider>().openPlan = null;
   }
 
   @override
@@ -416,7 +462,7 @@ class _PlanPageState extends State<PlanPage> with TickerProviderStateMixin {
       child: Scaffold(
         body: Stack(
           children: [
-            buildAppBarBackground(context, initialHeight),
+            buildAppBarBackground(context, initialHeight + 10),
             // buildBodyBackground(context, initialHeight),
             Scaffold(
               key: _scaffoldKey,
@@ -506,47 +552,6 @@ class _PlanPageState extends State<PlanPage> with TickerProviderStateMixin {
                         ),
                       ],
                     ),
-                  ),
-                ),
-                flexibleSpace: Opacity(
-                  opacity: (1 - appBarHeightController.value) * 0.8 + 0.2,
-                  child: Stack(
-                    fit: StackFit.expand,
-                    alignment: AlignmentDirectional.bottomCenter,
-                    children: [
-                      Image.asset(
-                        'assets/images/jpeg/image' +
-                            (plan != null
-                                ? (context
-                                            .read<Library>()
-                                            .planNames
-                                            .indexOf(plan.name) +
-                                        1)
-                                    .toString()
-                                : (context.read<Library>().planNames.length + 1)
-                                    .toString()) +
-                            '.jpeg',
-                        height: initialHeight - extent + 56,
-                        width: MediaQuery.of(context).size.width,
-                        fit: BoxFit.cover,
-                      ),
-                      Container(
-                        margin: EdgeInsets.all(0),
-                        height: initialHeight - extent + 56,
-                        width: MediaQuery.of(context).size.width,
-                        decoration: BoxDecoration(
-                          border: Border.all(width: 0),
-                          gradient: LinearGradient(
-                            begin: FractionalOffset.bottomCenter,
-                            end: FractionalOffset.topCenter,
-                            colors: [
-                              Colors.black.withOpacity(.90),
-                              Colors.black.withOpacity(.0),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
                   ),
                 ),
               ),
@@ -639,20 +644,24 @@ class _PlanPageState extends State<PlanPage> with TickerProviderStateMixin {
                               .withOpacity(0.2),
                           Theme.of(context).colorScheme.background),
                       child: Icon(editing ? Icons.save : Icons.edit,
-                          color: changed && valid || !editing
+                          color: (changed && valid) || !editing
                               ? Theme.of(context).iconTheme.color
                               : Theme.of(context)
                                   .iconTheme
                                   .color
                                   .withOpacity(.38)),
-                      onPressed: changed && valid || !editing
+                      onPressed: (changed && valid) || !editing
                           ? () {
                               FocusScope.of(context).unfocus();
                               setState(() {
-                                editing = !editing;
+                                _editing = !editing;
                               });
                               if (!editing) {
+                                setState(() {
+                                  _changed = false;
+                                });
                                 appBarHeightController.fling(velocity: -1);
+                                appBarHeightController.addListener(flingBack);
                                 _scaffoldKey.currentState.showSnackBar(
                                     SnackBar(content: Text('Plan saved')));
                                 var names = exerciseNames;
@@ -669,6 +678,8 @@ class _PlanPageState extends State<PlanPage> with TickerProviderStateMixin {
                                   plan = newPlan;
                                 }
                               } else {
+                                lastAppBarHeightValue =
+                                    appBarHeightController.value;
                                 appBarHeightController.fling(velocity: 1);
                               }
                             }
@@ -689,16 +700,17 @@ class _PlanPageState extends State<PlanPage> with TickerProviderStateMixin {
                             duration: Duration(milliseconds: 150),
                             child: plan == null ||
                                     nowPlaying.empty ||
-                                    nowPlaying.plan.name != plan.name
+                                    nowPlaying.plan.name != plan.name ||
+                                    !nowPlaying.playing
                                 ? Icon(Icons.play_arrow)
-                                : Icon(Icons.stop),
+                                : Icon(Icons.pause),
                           ),
                           onPressed: () {
                             if (nowPlaying.empty ||
                                 nowPlaying.plan.name != plan.name)
                               nowPlaying.changePlan(plan);
                             else
-                              nowPlaying.clear();
+                              nowPlaying.togglePlay();
                           },
                         ),
                       ),
@@ -725,6 +737,13 @@ class _PlanPageState extends State<PlanPage> with TickerProviderStateMixin {
     );
   }
 
+  void flingBack() {
+    if (appBarHeightController.value <= lastAppBarHeightValue) {
+      appBarHeightController.stop();
+      appBarHeightController.removeListener(flingBack);
+    }
+  }
+
   Widget buildAppBarBackground(BuildContext context, double initialHeight) {
     return IgnorePointer(
       child: Scaffold(
@@ -741,6 +760,18 @@ class _PlanPageState extends State<PlanPage> with TickerProviderStateMixin {
           // ],
           automaticallyImplyLeading: false,
           leading: null,
+          actions: [
+            if (plan != null && editing)
+              IconButton(
+                icon: Icon(Icons.delete),
+                onPressed: () {
+                  setState(() {
+                    _deleting = true;
+                  });
+                  Navigator.maybePop(context, plan != null ? plan.name : null);
+                },
+              )
+          ],
           bottom: PreferredSize(
             preferredSize: Size.fromHeight(initialHeight - extent + 40),
             child: Padding(
@@ -750,18 +781,61 @@ class _PlanPageState extends State<PlanPage> with TickerProviderStateMixin {
           flexibleSpace: Stack(
             alignment: AlignmentDirectional.bottomCenter,
             children: [
-              Container(
-                decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                        begin: FractionalOffset.bottomCenter,
-                        end: FractionalOffset.topCenter,
-                        colors: [
-                      Colors.black.withAlpha(80),
-                      Colors.black.withAlpha(30),
-                      Colors.black.withAlpha(0),
-                      Colors.black.withAlpha(0)
-                    ])),
+              // Container(
+              //   decoration: BoxDecoration(
+              //     gradient: LinearGradient(
+              //       begin: FractionalOffset.bottomCenter,
+              //       end: FractionalOffset.topCenter,
+              //       colors: [
+              //         Colors.black.withAlpha(80),
+              //         Colors.black.withAlpha(30),
+              //         Colors.black.withAlpha(0),
+              //         Colors.black.withAlpha(0)
+              //       ],
+              //     ),
+              //   ),
+              Opacity(
+                opacity: (1 - appBarHeightController.value) * 0.8 + 0.2,
+                child: Stack(
+                  fit: StackFit.expand,
+                  alignment: AlignmentDirectional.bottomCenter,
+                  children: [
+                    Image.asset(
+                      'assets/images/jpeg/image' +
+                          (plan != null
+                              ? (context
+                                          .read<Library>()
+                                          .planNames
+                                          .indexOf(plan.name) +
+                                      1)
+                                  .toString()
+                              : (context.read<Library>().planNames.length + 1)
+                                  .toString()) +
+                          '.jpeg',
+                      height: initialHeight - extent + 56,
+                      width: MediaQuery.of(context).size.width,
+                      fit: BoxFit.cover,
+                    ),
+                    Container(
+                      margin: EdgeInsets.all(0),
+                      height: initialHeight - extent + 56,
+                      width: MediaQuery.of(context).size.width,
+                      decoration: BoxDecoration(
+                        border: Border.all(width: 0),
+                        gradient: LinearGradient(
+                          begin: FractionalOffset.bottomCenter,
+                          end: FractionalOffset.topCenter,
+                          colors: [
+                            Colors.black.withOpacity(.90),
+                            Colors.black.withOpacity(.0),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
+
               Material(
                 elevation: 8,
                 color: Colors.transparent,

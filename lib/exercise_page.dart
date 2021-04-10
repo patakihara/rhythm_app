@@ -17,10 +17,17 @@ class ExercisePage extends StatefulWidget {
 }
 
 class _ExercisePageState extends State<ExercisePage> {
-  bool editing;
+  bool _editing;
+  bool _valid;
+  bool _changed;
+  bool _deleting;
+
+  bool get editing => _editing;
+  bool get valid => _valid;
+  bool get changed => _changed;
+  bool get deleting => _deleting;
+
   Exercise exercise;
-  bool valid;
-  bool changed;
 
   bool fromTile;
 
@@ -37,7 +44,8 @@ class _ExercisePageState extends State<ExercisePage> {
   @override
   void initState() {
     exercise = widget.exercise;
-    editing = (widget.exercise == null);
+    _deleting = false;
+    _editing = (widget.exercise == null);
     fromTile = !(widget.exercise == null);
     if (exercise != null) {
       name.text = exercise.name;
@@ -47,8 +55,8 @@ class _ExercisePageState extends State<ExercisePage> {
       secsRest.text = exercise.secsRest.toString();
       secsUp.text = exercise.secsUp.toString();
       secsDown.text = exercise.secsDown.toString();
-      changed = false;
-      valid = true;
+      _changed = false;
+      _valid = true;
     } else {
       sets.text = '3';
       reps.text = '10';
@@ -56,8 +64,8 @@ class _ExercisePageState extends State<ExercisePage> {
       secsRest.text = '30';
       secsUp.text = '1.0';
       secsDown.text = '1.0';
-      changed = false;
-      valid = false;
+      _changed = false;
+      _valid = false;
     }
 
     var controllers = [name, sets, reps, secsStart, secsRest, secsUp, secsDown];
@@ -74,7 +82,7 @@ class _ExercisePageState extends State<ExercisePage> {
   void checkIfChanged() {
     setState(() {
       if (exercise != null) {
-        changed = !(name.text == exercise.name.toString() &&
+        _changed = !(name.text == exercise.name.toString() &&
             sets.text == exercise.sets.toString() &&
             reps.text == exercise.reps.toString() &&
             secsStart.text == exercise.secsStart.toString() &&
@@ -82,13 +90,13 @@ class _ExercisePageState extends State<ExercisePage> {
             secsUp.text == exercise.secsUp.toString() &&
             secsDown.text == exercise.secsDown.toString());
       } else
-        changed = true;
+        _changed = true;
     });
   }
 
   void checkIfValid() {
     setState(() {
-      valid = validate(name, nameValidator) &&
+      _valid = validate(name, nameValidator) &&
           validate(sets, intValidator) &&
           validate(reps, intValidator) &&
           validate(secsStart, numValidator) &&
@@ -145,33 +153,50 @@ class _ExercisePageState extends State<ExercisePage> {
   }
 
   Future<bool> onBackPressed() async {
-    if (exercise == null || !editing) {
-      // if (fromTile)
-      //   provider.Provider.of<MenuProvider>(context, listen: false).showNavBar =
-      //       false;
-      context.read<MenuProvider>().showNavBar = true;
-      context.read<MenuProvider>().inExercisePage = false;
-      context.read<MenuProvider>().openPlan = null;
-      return !fromTile;
-    } else {
-      if (changed)
-        showDialog<bool>(
-            context: context,
-            builder: (_) {
-              return DiscardChangesDialog(context: context);
-            }).then((discard) {
-          if (discard)
-            setState(() {
-              editing = false;
-              discardChanges();
-            });
-        });
-      else
+    bool close = false;
+
+    if ((exercise == null || !editing) && !deleting) {
+      close = true;
+    } else if (deleting) {
+      await showDialog<bool>(
+          context: context,
+          builder: (_) {
+            return DeleteDialog(context: context);
+          }).then((delete) {
         setState(() {
-          editing = false;
+          _deleting = delete ?? false;
         });
-      return false;
+      });
+      close = deleting;
+      if (deleting) context.read<Library>().removeExercise(exercise);
+    } else if (changed) {
+      await showDialog<bool>(
+          context: context,
+          builder: (_) {
+            return DiscardChangesDialog(context: context);
+          }).then((discard) {
+        if (discard)
+          setState(() {
+            _editing = false;
+            discardChanges();
+          });
+      });
+      close = false;
+    } else {
+      setState(() {
+        _editing = false;
+      });
+      close = false;
     }
+
+    if (close) closePage();
+    return false;
+  }
+
+  void closePage() {
+    context.read<MenuProvider>().showNavBar = true;
+    context.read<MenuProvider>().inExercisePage = false;
+    context.read<MenuProvider>().openExercise = null;
   }
 
   @override
@@ -191,11 +216,25 @@ class _ExercisePageState extends State<ExercisePage> {
           // flexibleSpace: Material(
           //     color: Theme.of(context).colorScheme.surface, elevation: 4),
           leading: IconButton(
-              icon: exercise == null || editing
-                  ? Icon(Icons.close)
-                  : Icon(Icons.arrow_back),
-              onPressed: () => Navigator.maybePop(
-                  context, exercise != null ? exercise.name : null)),
+            icon: exercise == null || editing
+                ? Icon(Icons.close)
+                : Icon(Icons.arrow_back),
+            onPressed: () => Navigator.maybePop(
+                context, exercise != null ? exercise.name : null),
+          ),
+          actions: [
+            if (exercise != null && editing)
+              IconButton(
+                icon: Icon(Icons.delete),
+                onPressed: () {
+                  setState(() {
+                    _deleting = true;
+                  });
+                  Navigator.maybePop(
+                      context, exercise != null ? exercise.name : null);
+                },
+              )
+          ],
           bottom: PreferredSize(
             preferredSize: Size.fromHeight(96),
             child: Padding(
@@ -347,15 +386,18 @@ class _ExercisePageState extends State<ExercisePage> {
                     Theme.of(context).colorScheme.onBackground.withOpacity(0.2),
                     Theme.of(context).colorScheme.background),
                 child: Icon(editing ? Icons.save : Icons.edit,
-                    color: changed && valid || !editing
+                    color: (changed && valid) || !editing
                         ? Theme.of(context).iconTheme.color
                         : Theme.of(context).iconTheme.color.withOpacity(0.38)),
-                onPressed: changed && valid || !editing
+                onPressed: (changed && valid) || !editing
                     ? () {
                         FocusScope.of(context).unfocus();
                         setState(() {
-                          editing = !editing;
+                          _editing = !editing;
                           if (!editing) {
+                            setState(() {
+                              _changed = false;
+                            });
                             _scaffoldKey.currentState.showSnackBar(
                                 SnackBar(content: Text('Exercise saved')));
                             var newExercise = Exercise(
@@ -386,71 +428,31 @@ class _ExercisePageState extends State<ExercisePage> {
                     : null,
                 mini: true,
               ),
-              provider.Consumer<NowPlaying>(
-                builder: (context, nowPlaying, child) => AnimatedContainer(
-                  margin: EdgeInsets.only(
-                      right: !editing && nowPlaying.empty ? 0 : 28),
-                  height: editing || !nowPlaying.empty ? 0 : 56,
-                  width: editing || !nowPlaying.empty ? 0 : 56,
-                  duration: Duration(milliseconds: 150),
-                  child: FloatingActionButton(
+              AnimatedContainer(
+                margin: EdgeInsets.only(right: !editing ? 0 : 28),
+                height: editing ? 0 : 56,
+                width: editing ? 0 : 56,
+                duration: Duration(milliseconds: 150),
+                child: provider.Consumer<NowPlaying>(
+                  builder: (context, nowPlaying, child) => FloatingActionButton(
                     heroTag: 'playButton',
                     child: AnimatedOpacity(
-                      opacity: editing || !nowPlaying.empty ? 0 : 1,
+                      opacity: editing ? 0 : 1,
                       duration: Duration(milliseconds: 150),
-                      child: Icon(() {
-                        // exercise == null ||
-                        //       nowPlaying.empty ||
-                        //       nowPlaying.exercise.name != exercise.name
-                        //   ? Icon(Icons.play_arrow)
-                        //   : Icon(Icons.stop),
-                        if (exercise == null || nowPlaying.empty)
-                          return Icons.play_arrow;
-                        else if (nowPlaying.exercise.name != exercise.name) {
-                          if (nowPlaying.plan.exerciseNames
-                              .contains(exercise.name)) {
-                            bool check() =>
-                                nowPlaying.plan.exerciseNames
-                                    .indexOf(exercise.name) >
-                                nowPlaying.plan.exerciseNames
-                                    .indexOf(nowPlaying.exercise.name);
-                            if (check())
-                              return Icons.fast_forward;
-                            else
-                              return Icons.fast_rewind;
-                          } else
-                            return Icons.play_arrow;
-                        } else
-                          return Icons.stop;
-                      }()),
+                      child: exercise == null ||
+                              nowPlaying.empty ||
+                              nowPlaying.exercise.name != exercise.name ||
+                              !nowPlaying.playing
+                          ? Icon(Icons.play_arrow)
+                          : Icon(Icons.pause),
                     ),
                     onPressed: () {
-                      bool notCurrentlyPlaying() =>
-                          nowPlaying.exercise.name != exercise.name;
-                      if (nowPlaying.empty) {
+                      if (nowPlaying.empty ||
+                          nowPlaying.exercise.name != exercise.name)
                         nowPlaying.changePlan(Plan.fromList('', [exercise.name])
                             .withParent(exercise.parent));
-                      } else if (notCurrentlyPlaying()) {
-                        if (nowPlaying.plan.exerciseNames
-                            .contains(exercise.name)) {
-                          bool check() =>
-                              nowPlaying.plan.exerciseNames
-                                  .indexOf(exercise.name) >
-                              nowPlaying.plan.exerciseNames
-                                  .indexOf(nowPlaying.exercise.name);
-                          if (check())
-                            while (notCurrentlyPlaying())
-                              nowPlaying.skipForward();
-                          else
-                            while (notCurrentlyPlaying())
-                              nowPlaying.skipBackward();
-                        } else {
-                          nowPlaying.changePlan(
-                              Plan.fromList('', [exercise.name])
-                                  .withParent(exercise.parent));
-                        }
-                      } else
-                        nowPlaying.clear();
+                      else
+                        nowPlaying.togglePlay();
                     },
                   ),
                 ),

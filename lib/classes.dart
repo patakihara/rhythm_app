@@ -220,7 +220,6 @@ abstract class Data {
 
 class Plan implements Data {
   final String name;
-  // final List<Exercise> exercises;
   List<String> _exerciseNames = [];
   Library parent;
   String key;
@@ -268,7 +267,7 @@ class Plan implements Data {
   void add(String exerciseName) {
     assert(parent.containsExercise(exerciseName));
     _exerciseNames.add(exerciseName);
-    parent.notifyListeners();
+    parent.update();
   }
 
   void replace(String oldName, newName) {
@@ -276,7 +275,13 @@ class Plan implements Data {
     assert(parent.containsExercise(newName));
     var ind = _exerciseNames.indexOf(oldName);
     _exerciseNames[ind] = newName;
-    parent.notifyListeners();
+    parent.update();
+  }
+
+  void remove(String exerciseName) {
+    assert(_exerciseNames.contains(exerciseName));
+    _exerciseNames.remove(exerciseName);
+    parent.update();
   }
 
   bool contains(String exerciseName) {
@@ -548,9 +553,15 @@ class ExerciseTimer extends ChangeNotifier {
       return null;
   }
 
-  ExerciseTimer(this.exercise,
-      {this.doAfterToc, this.doAfterTic, this.doWhenRest})
-      : numBeepers = exercise.phases.length {
+  final bool duckAudio;
+
+  ExerciseTimer(
+    this.exercise, {
+    this.doAfterToc,
+    this.doAfterTic,
+    this.doWhenRest,
+    this.duckAudio,
+  }) : numBeepers = exercise.phases.length {
     metronome = Metronome(
       Duration(milliseconds: (exercise.secsUp * 1000).round()),
       Duration(milliseconds: (exercise.secsDown * 1000).round()),
@@ -559,14 +570,17 @@ class ExerciseTimer extends ChangeNotifier {
       onTic: doAfterTic,
       onReset: doWhenRest,
       onEnd: _nextTimer,
+      duckAudio: duckAudio,
     );
     readyBeeper = ReadyBeeper(
       Duration(milliseconds: (exercise.secsStart * 1000).round()),
       onEnd: _nextTimer,
+      duckAudio: duckAudio,
     );
     restBeeper = RestBeeper(
       Duration(milliseconds: (exercise.secsRest * 1000).round()),
       onEnd: _nextTimer,
+      duckAudio: duckAudio,
     );
   }
 
@@ -621,6 +635,7 @@ class ExerciseTimer extends ChangeNotifier {
   void _nextTimer() {
     if (index == numBeepers - 1) {
       pause();
+      currentBeeper.end();
       ended = true;
     } else if (index < numBeepers - 1) {
       currentBeeper.pause();
@@ -691,7 +706,7 @@ abstract class Beeper {
       durations.reduce((value, element) => value + element);
 
   Duration get position {
-    if (disposed) return duration;
+    if (disposed || _ended) return duration;
     return (audioIndex > 0
             ? durations
                 .sublist(0, audioIndex)
@@ -714,6 +729,9 @@ abstract class Beeper {
   bool _sourcesSetUp = false;
 
   bool _running = false;
+  bool _ended = false;
+
+  final bool duckAudio;
 
   StreamSubscription<ProcessingState> _playerStateSubscription;
 
@@ -737,6 +755,7 @@ abstract class Beeper {
   Beeper({
     void Function() onReset,
     void Function() onEnd,
+    this.duckAudio = false,
   })  : this.onReset = onReset ?? (() {}),
         this.onEnd = onEnd ?? (() {}) {
     setUpSources();
@@ -744,11 +763,8 @@ abstract class Beeper {
     setUpSubscription();
   }
 
-  void getPlayer() async {
+  void getPlayer() {
     if (audioPlayer != null) return;
-    SharedPreferences preferences = await SharedPreferences.getInstance();
-    final duckAudio = preferences.getBool('duckAudio') ?? false;
-
     audioPlayer = AudioPlayer(
       handleInterruptions: false,
       handleAudioSessionActivation: duckAudio,
@@ -814,8 +830,19 @@ abstract class Beeper {
     if (running) {
       audioPlayer.play();
     }
+    _ended = false;
     _playerStateSubscription.resume();
     onReset();
+  }
+
+  void end() {
+    assert(!disposed, '$typeName has been disposed, cannot end');
+    print('$typeName skipped to end');
+    audioPlayer.pause();
+    audioPlayer.seek(durations[audioPlayer.currentIndex]);
+    audioPlayer.pause();
+    _running = false;
+    _ended = true;
   }
 
   bool disposed = false;
@@ -852,9 +879,10 @@ class Metronome extends Beeper {
     void Function() onToc,
     void Function() onReset,
     void Function() onEnd,
+    bool duckAudio,
   })  : this.onTic = onTic ?? (() {}),
         this.onToc = onToc ?? (() {}),
-        super(onReset: onReset, onEnd: onEnd);
+        super(onReset: onReset, onEnd: onEnd, duckAudio: duckAudio);
 
   @override
   void setUpPlayer() async {
@@ -1007,9 +1035,9 @@ class Metronome extends Beeper {
 class ReadyBeeper extends Beeper {
   final Duration inputDuration;
 
-  ReadyBeeper(Duration duration, {void Function() onEnd})
+  ReadyBeeper(Duration duration, {void Function() onEnd, bool duckAudio})
       : this.inputDuration = duration,
-        super(onEnd: onEnd);
+        super(onEnd: onEnd, duckAudio: duckAudio);
 
   @override
   void setUpSources() {
@@ -1074,9 +1102,9 @@ class RestBeeper extends Beeper {
 
   final Duration inputDuration;
 
-  RestBeeper(Duration duration, {void Function() onEnd})
+  RestBeeper(Duration duration, {void Function() onEnd, bool duckAudio})
       : this.inputDuration = duration,
-        super(onEnd: onEnd);
+        super(onEnd: onEnd, duckAudio: duckAudio);
 
   @override
   void setUpSources() {

@@ -5,6 +5,7 @@ import 'home_page.dart';
 // import 'package:sounds/sounds.dart';
 import 'dart:async';
 import 'package:flutter_media_notification/flutter_media_notification.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 // class BackgroundPlayer extends BackgroundAudioTask {
 //   final NowPlaying nowPlaying;
@@ -203,6 +204,29 @@ class Library extends ChangeNotifier {
     notifyListeners();
   }
 
+  void removeExercise(Exercise exercise) {
+    assert(!availableExerciseName(exercise.name),
+        '[Library.removeExercise] This exercise does not exist');
+    exercisesMap.remove(exercise.name);
+    _exercisesManager.remove(exercise);
+    for (var i = 0; i < plansMap.keys.length; i++) {
+      var planName = plansMap.keys.elementAt(i);
+      if (plansMap[planName].contains(exercise.name)) {
+        final oldPlan = plansMap[planName];
+        final newExercises = oldPlan.exerciseNames.sublist(0);
+        while (newExercises.contains(exercise.name)) {
+          newExercises.remove(exercise.name);
+        }
+        if (newExercises.length > 0) {
+          final newPlan = Plan.fromList(planName, newExercises);
+          swapPlan(oldPlan, newPlan);
+        } else {
+          removePlan(oldPlan);
+        }
+      }
+    }
+  }
+
   void swapExercise(Exercise oldExercise, Exercise newExercise) {
     var case1 = exerciseNameCounts[newExercise.name] == null;
     var case2 = exerciseNameCounts[newExercise.name] == 1 &&
@@ -234,6 +258,13 @@ class Library extends ChangeNotifier {
     _plansManager.add(plan);
 
     notifyListeners();
+  }
+
+  void removePlan(Plan plan) {
+    assert(!availablePlanName(plan.name),
+        '[Library.removeExercise] This plan does not exist');
+    plansMap.remove(plan.name);
+    _plansManager.remove(plan);
   }
 
   void swapPlan(Plan oldPlan, Plan newPlan) {
@@ -290,6 +321,10 @@ class Library extends ChangeNotifier {
             .key
             .replaceRange(0, null, DateTime.now().toString());
     }
+    notifyListeners();
+  }
+
+  void update() {
     notifyListeners();
   }
 }
@@ -435,7 +470,14 @@ class Progress extends ChangeNotifier {
 }
 
 class NowPlaying extends ChangeNotifier {
-  NowPlaying._privateContructor();
+  NowPlaying._privateContructor() {
+    fetchPreferences();
+  }
+
+  Future<void> fetchPreferences() async {
+    final preferences = await SharedPreferences.getInstance();
+    duckAudio = preferences.getBool('duckAudio') ?? false;
+  }
 
   static final NowPlaying _instance = NowPlaying._privateContructor();
 
@@ -452,6 +494,8 @@ class NowPlaying extends ChangeNotifier {
   RepState repState = RepState.rest;
   bool _cleared = false;
   bool _serviceStarted = false;
+
+  bool duckAudio = false;
 
   // if using audioplayers:
   // AudioCache audioPlayer1 = AudioCache();
@@ -472,7 +516,7 @@ class NowPlaying extends ChangeNotifier {
   int get exerciseIndex => _exerciseIndex;
 
   bool get empty {
-    return plan == null || _cleared;
+    return plan == null || _cleared || exerciseTimer == null;
   }
 
   bool get playing {
@@ -594,7 +638,7 @@ class NowPlaying extends ChangeNotifier {
 
   bool get isLast {
     if (empty)
-      return null;
+      return false;
     else
       return (_exerciseIndex == plan.exercises.length - 1);
   }
@@ -650,7 +694,7 @@ class NowPlaying extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> changePlan(Plan newPlan) async {
+  void changePlan(Plan newPlan) {
     clear();
     _cleared = false;
     plan = newPlan;
@@ -661,7 +705,8 @@ class NowPlaying extends ChangeNotifier {
     exerciseTimer = ExerciseTimer(exercise,
         doAfterToc: _repStateUp,
         doAfterTic: _repStateDown,
-        doWhenRest: _repStateRest);
+        doWhenRest: _repStateRest,
+        duckAudio: duckAudio);
     exerciseTimer.addListener(() {
       notifyListeners();
     });
@@ -670,6 +715,7 @@ class NowPlaying extends ChangeNotifier {
     // startAudioService();
     // playAudioService();
     notifyListeners();
+    MediaNotification.showNotification(title: exercise.name, author: plan.name);
   }
 
   // void clearPlan() {
@@ -687,7 +733,8 @@ class NowPlaying extends ChangeNotifier {
       exerciseTimer = ExerciseTimer(exercise,
           doAfterToc: _repStateUp,
           doAfterTic: _repStateDown,
-          doWhenRest: _repStateRest);
+          doWhenRest: _repStateRest,
+          duckAudio: duckAudio);
       exerciseTimer.addListener(() {
         notifyListeners();
       });
@@ -715,7 +762,8 @@ class NowPlaying extends ChangeNotifier {
       exerciseTimer = ExerciseTimer(exercise,
           doAfterToc: _repStateUp,
           doAfterTic: _repStateDown,
-          doWhenRest: _repStateRest);
+          doWhenRest: _repStateRest,
+          duckAudio: duckAudio);
       exerciseTimer.addListener(() {
         notifyListeners();
       });
@@ -747,10 +795,10 @@ class NowPlaying extends ChangeNotifier {
     }
   }
 
-  void play() {
+  void play() async {
     if (exerciseTimer.ended) {
       if (!isLast) {
-        skipForward();
+        await skipForward();
         exerciseTimer.play();
         notifyListeners();
         MediaNotification.showNotification(

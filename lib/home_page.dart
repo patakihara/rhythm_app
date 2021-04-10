@@ -598,23 +598,23 @@ class _TimersMenuState extends State<TimersMenu> with TickerProviderStateMixin {
           onPressed: () {
             if (menuProvider.tabMenu == TabMenu.plans) {
               menuProvider.showNavBar = false;
-              Navigator.push(context, Methods.slideUpRoute(PlanPage()))
-                  .then((_) {
-                menuProvider.inPlanPage = false;
-              });
-              Timer(menuProvider.navBarTransitionWait, () {
-                menuProvider.showNavBar = true;
-              });
+              // Navigator.push(context, Methods.slideUpRoute(PlanPage()))
+              //     .then((_) {
+              //   menuProvider.inPlanPage = false;
+              // });
+              // Timer(menuProvider.navBarTransitionWait, () {
+              //   menuProvider.showNavBar = true;
+              // });
               menuProvider.inPlanPage = true;
             } else {
               menuProvider.showNavBar = false;
-              Navigator.push(context, Methods.slideUpRoute(ExercisePage()))
-                  .then((_) {
-                menuProvider.inExercisePage = false;
-              });
-              Timer(menuProvider.navBarTransitionWait, () {
-                menuProvider.showNavBar = true;
-              });
+              // Navigator.push(context, Methods.slideUpRoute(ExercisePage()))
+              //     .then((_) {
+              //   menuProvider.inExercisePage = false;
+              // });
+              // Timer(menuProvider.navBarTransitionWait, () {
+              //   menuProvider.showNavBar = true;
+              // });
               menuProvider.inExercisePage = true;
             }
           },
