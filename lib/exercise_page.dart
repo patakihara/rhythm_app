@@ -194,7 +194,7 @@ class _ExercisePageState extends State<ExercisePage> {
   }
 
   void closePage() {
-    context.read<MenuProvider>().showNavBar = true;
+    // context.read<MenuProvider>().showNavBar = true;
     context.read<MenuProvider>().inExercisePage = false;
     context.read<MenuProvider>().openExercise = null;
   }

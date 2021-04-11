@@ -47,6 +47,43 @@ class DiscardChangesDialog extends StatelessWidget {
   }
 }
 
+class DeleteDialog extends StatelessWidget {
+  const DeleteDialog({
+    Key key,
+    @required this.context,
+  }) : super(key: key);
+
+  final BuildContext context;
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      // title: Text(''),
+      content: SingleChildScrollView(
+        child: ListBody(
+          children: <Widget>[
+            Text('Are you sure you want to delete?'),
+          ],
+        ),
+      ),
+      actions: <Widget>[
+        TextButton(
+          child: Text('Delete'),
+          onPressed: () {
+            Navigator.of(context).pop(true);
+          },
+        ),
+        TextButton(
+          child: Text('Cancel'),
+          onPressed: () {
+            Navigator.of(context).pop(false);
+          },
+        ),
+      ],
+    );
+  }
+}
+
 class AnimatedBottomBar extends StatelessWidget {
   const AnimatedBottomBar({
     Key key,
@@ -65,7 +102,7 @@ class AnimatedBottomBar extends StatelessWidget {
         elevation: 8,
         child: AnimatedContainer(
           duration: menuProvider.navBarTransitionDuration,
-          height: !menuProvider.showNavBar
+          height: false
               ? 0
               : nowPlaying.empty
                   ? (menuProvider.inPlanPage || menuProvider.inExercisePage
@@ -217,6 +254,7 @@ class ExerciseTile extends StatelessWidget {
     this.trailing,
     this.selected = false,
     this.onTap,
+    this.width,
   }) : super(key: key);
 
   final Widget leading;
@@ -224,6 +262,7 @@ class ExerciseTile extends StatelessWidget {
   final Exercise exercise;
   final bool selected;
   final Function() onTap;
+  final double width;
 
   String get tileDuration {
     return exercise.duration.minutesSeconds();
@@ -275,6 +314,38 @@ class ExerciseTile extends StatelessWidget {
   }
 }
 
+class DismissibleExerciseTile extends StatelessWidget {
+  const DismissibleExerciseTile({
+    Key key,
+    @required this.exercise,
+    this.leading,
+    this.trailing,
+    this.selected = false,
+    this.onTap,
+    this.onDismissed,
+  }) : super(key: key);
+
+  final Widget leading;
+  final Widget trailing;
+  final Exercise exercise;
+  final bool selected;
+  final Function() onTap;
+  final void Function(DismissDirection direction) onDismissed;
+  @override
+  Widget build(BuildContext context) {
+    return Dismissible(
+      key: key,
+      child: ExerciseTile(
+        exercise: exercise,
+        leading: leading,
+        trailing: trailing,
+        selected: selected,
+        onTap: onTap,
+      ),
+      onDismissed: onDismissed,
+    );
+  }
+}
 // class AnimatedFAB extends StatelessWidget {
 //   @override
 //   Widget build(BuildContext context) {
@@ -534,7 +605,7 @@ class _PlayCardState extends State<PlayCard>
 class TimerIndicator extends StatefulWidget {
   const TimerIndicator({
     Key key,
-    this.animation,
+    @required this.animation,
     this.isSmall = true,
   }) : super(key: key);
 
@@ -562,27 +633,40 @@ class _TimerIndicatorState extends State<TimerIndicator> {
   final double minContainerWidth = 0;
   final double minContainerHeight = 0;
 
-  double value;
+  // Animation<double> scale;
 
-  double get scale => value * 3 - 2 > 0 ? value * 3 - 2 : 0;
+  // double value;
+
+  // double get scale => value * 3 - 2 > 0 ? value * 3 - 2 : 0;
 
   @override
-  void initState() {
-    super.initState();
-    if (widget.animation != null) {
-      value = widget.animation.value;
-      widget.animation.addListener(() {
-        if (mounted)
-          setState(() {
-            value = widget.animation.value;
-          });
-      });
-    } else {
-      if (widget.isSmall)
-        value = 0.0;
-      else
-        value = 1.0;
-    }
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    // scale = Tween<double>(begin: 0, end: 1).animate(
+    //   CurvedAnimation(
+    //     parent: widget.animation,
+    //     curve: Interval(
+    //       2 / 3,
+    //       1,
+    //     ),
+    //   ),
+    // );
+
+    // if (widget.animation != null) {
+    //   value = widget.animation.value;
+    //   widget.animation.addListener(() {
+    //     if (mounted)
+    //       setState(() {
+    //         value = widget.animation.value;
+    //       });
+    //   });
+    // } else {
+    //   if (widget.isSmall)
+    //     value = 0.0;
+    //   else
+    //     value = 1.0;
+    // }
   }
 
   // @override
@@ -596,7 +680,13 @@ class _TimerIndicatorState extends State<TimerIndicator> {
   // }
 
   double interpolate(double start, double end) {
-    return (end - start) * value + start;
+    return (end - start) * widget.animation.value + start;
+  }
+
+  double scale() {
+    return widget.animation.value * 3 - 2 > 0
+        ? widget.animation.value * 3 - 2
+        : 0;
   }
 
   @override
@@ -605,72 +695,180 @@ class _TimerIndicatorState extends State<TimerIndicator> {
       builder: (context, nowPlaying, child) {
         final showFirst = !nowPlaying.inSet && !nowPlaying.inEnd;
 
-        return Stack(
-          children: [
-            AnimatedOpacity(
-              opacity: showFirst ? 1 : 0,
-              duration: Duration(milliseconds: animationDuration),
-              child: provider.Consumer<Progress>(
-                builder: (context, progress, child) => CircularPercentIndicator(
-                  curve: Curves.fastOutSlowIn,
-                  animation: false, //!nowPlaying.playing,
-                  animationDuration: animationDuration,
-                  animateFromLastPercent: false, //true,
-                  radius: interpolate(
-                    minOuterRadius,
-                    maxOuterRadius,
-                  ),
-                  lineWidth: interpolate(
-                    minOuterLineWidth,
-                    maxOuterLineWidth,
-                  ),
-                  circularStrokeCap: CircularStrokeCap.round,
-                  percent:
-                      !nowPlaying.inSet ? progress.setPercent.toDouble() : 0.0,
-                  progressColor: Color.alphaBlend(
-                      Theme.of(context)
-                          .colorScheme
-                          .onBackground
-                          .withOpacity(0.6),
-                      Theme.of(context).colorScheme.background),
-                  backgroundColor:
-                      Theme.of(context).colorScheme.onBackground.withAlpha(40),
-                  center: CircularPercentIndicator(
+        return AnimatedBuilder(
+          animation: widget.animation,
+          builder: (context, child) => Stack(
+            children: [
+              AnimatedOpacity(
+                opacity: showFirst ? 1 : 0,
+                duration: Duration(milliseconds: animationDuration),
+                child: provider.Consumer<Progress>(
+                  builder: (context, progress, child) =>
+                      CircularPercentIndicator(
                     curve: Curves.fastOutSlowIn,
                     animation: false, //!nowPlaying.playing,
                     animationDuration: animationDuration,
-                    animateFromLastPercent: false, // true,
+                    animateFromLastPercent: false, //true,
                     radius: interpolate(
-                      minInnerRadius,
-                      maxInnerRadius,
+                      minOuterRadius,
+                      maxOuterRadius,
                     ),
                     lineWidth: interpolate(
-                      minInnerLineWidth,
-                      maxInnerLineWidth,
+                      minOuterLineWidth,
+                      maxOuterLineWidth,
                     ),
                     circularStrokeCap: CircularStrokeCap.round,
-                    percent: progress.percent.toDouble(),
-                    progressColor: Theme.of(context).accentColor,
+                    percent: !nowPlaying.inSet
+                        ? progress.setPercent.toDouble()
+                        : 0.0,
+                    progressColor: Color.alphaBlend(
+                        Theme.of(context)
+                            .colorScheme
+                            .onBackground
+                            .withOpacity(0.6),
+                        Theme.of(context).colorScheme.background),
+                    backgroundColor: Theme.of(context)
+                        .colorScheme
+                        .onBackground
+                        .withAlpha(40),
+                    center: CircularPercentIndicator(
+                      curve: Curves.fastOutSlowIn,
+                      animation: false, //!nowPlaying.playing,
+                      animationDuration: animationDuration,
+                      animateFromLastPercent: false, // true,
+                      radius: interpolate(
+                        minInnerRadius,
+                        maxInnerRadius,
+                      ),
+                      lineWidth: interpolate(
+                        minInnerLineWidth,
+                        maxInnerLineWidth,
+                      ),
+                      circularStrokeCap: CircularStrokeCap.round,
+                      percent: progress.percent.toDouble(),
+                      progressColor: Theme.of(context).accentColor,
+                      backgroundColor:
+                          Theme.of(context).accentColor.withAlpha(30),
+                      center: ClipOval(
+                        child: SizedOverflowBox(
+                          size: Size.square(scale() * maxContainerWidth),
+                          child: Opacity(
+                            opacity: widget.animation.value,
+                            child: Container(
+                              width: maxContainerWidth,
+                              height: maxContainerHeight,
+                              child: SingleChildScrollView(
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.max,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: <Widget>[
+                                    Padding(
+                                      padding: const EdgeInsets.all(4.0),
+                                      child: Text(
+                                          nowPlaying.inReady ? 'Ready' : 'Rest',
+                                          overflow: TextOverflow.clip,
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .headline2
+                                              .apply(
+                                                color: Theme.of(context)
+                                                    .colorScheme
+                                                    .onBackground,
+                                                fontSizeFactor: 0.4,
+                                              )
+                                              .copyWith(
+                                                  fontWeight: FontWeight.w600)),
+                                    ),
+                                    !nowPlaying.inEnd
+                                        ? Text(
+                                            nowPlaying.currentSet.cardinal() +
+                                                ' set',
+                                            overflow: TextOverflow.clip,
+                                            style:
+                                                Theme.of(context)
+                                                    .textTheme
+                                                    .subtitle2
+                                                    .apply(
+                                                        color: Theme.of(context)
+                                                            .accentColor,
+                                                        fontWeightDelta: 2))
+                                        : SizedBox(height: 0),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              AnimatedOpacity(
+                opacity: showFirst ? 0 : 1,
+                duration: Duration(milliseconds: animationDuration),
+                child: provider.Consumer<Progress>(
+                  builder: (context, progress, child) =>
+                      CircularPercentIndicator(
+                    curve: Curves.fastOutSlowIn,
+                    animation: false, //!nowPlaying.playing,
+                    animationDuration: animationDuration,
+                    animateFromLastPercent: false, //true,
+                    radius: interpolate(
+                      minOuterRadius,
+                      maxOuterRadius,
+                    ),
+                    lineWidth: interpolate(
+                      minOuterLineWidth,
+                      maxOuterLineWidth,
+                    ),
+                    circularStrokeCap: CircularStrokeCap.round,
+                    percent: progress.setPercent.toDouble(),
+                    progressColor: Theme.of(context).colorScheme.primary,
                     backgroundColor:
-                        Theme.of(context).accentColor.withAlpha(30),
-                    center: ClipOval(
-                      child: SizedOverflowBox(
-                        size: Size.square(scale * maxContainerWidth),
-                        child: Opacity(
-                          opacity: value,
-                          child: Container(
-                            width: maxContainerWidth,
-                            height: maxContainerHeight,
-                            child: SingleChildScrollView(
-                              child: Column(
-                                mainAxisSize: MainAxisSize.max,
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: <Widget>[
-                                  Padding(
-                                    padding: const EdgeInsets.all(4.0),
-                                    child: Text(
-                                        nowPlaying.inReady ? 'Ready' : 'Rest',
+                        Theme.of(context).colorScheme.primary.withAlpha(40),
+                    center: CircularPercentIndicator(
+                      curve: Curves.fastOutSlowIn,
+                      animation: false, //!nowPlaying.playing,
+                      animationDuration: animationDuration,
+                      animateFromLastPercent: false, // true,
+                      radius: interpolate(
+                        minInnerRadius,
+                        maxInnerRadius,
+                      ),
+                      lineWidth: interpolate(
+                        minInnerLineWidth,
+                        maxInnerLineWidth,
+                      ),
+                      circularStrokeCap: CircularStrokeCap.round,
+                      percent: progress.percent.toDouble(),
+                      progressColor: Theme.of(context).accentColor,
+                      backgroundColor:
+                          Theme.of(context).accentColor.withAlpha(40),
+                      center: ClipOval(
+                        child: SizedOverflowBox(
+                          size: Size.square(scale() * maxContainerWidth),
+                          child: Opacity(
+                            opacity: widget.animation.value,
+                            child: Container(
+                              width: maxContainerWidth,
+                              height: maxContainerHeight,
+                              child: SingleChildScrollView(
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.max,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: <Widget>[
+                                    Padding(
+                                      padding: const EdgeInsets.all(4.0),
+                                      child: Text(
+                                        (nowPlaying.inSet &&
+                                                nowPlaying.currentRep <=
+                                                    nowPlaying.exercise.reps)
+                                            ? nowPlaying.currentRep
+                                                .pluralString('rep')
+                                            : 'Done',
                                         overflow: TextOverflow.clip,
                                         style: Theme.of(context)
                                             .textTheme
@@ -678,129 +876,29 @@ class _TimerIndicatorState extends State<TimerIndicator> {
                                             .apply(
                                               color: Theme.of(context)
                                                   .colorScheme
-                                                  .onBackground,
+                                                  .primary,
                                               fontSizeFactor: 0.4,
                                             )
                                             .copyWith(
-                                                fontWeight: FontWeight.w600)),
-                                  ),
-                                  !nowPlaying.inEnd
-                                      ? Text(
-                                          nowPlaying.currentSet.cardinal() +
-                                              ' set',
-                                          overflow: TextOverflow.clip,
-                                          style:
-                                              Theme.of(context)
-                                                  .textTheme
-                                                  .subtitle2
-                                                  .apply(
-                                                      color: Theme.of(context)
-                                                          .accentColor,
-                                                      fontWeightDelta: 2))
-                                      : SizedBox(height: 0),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            AnimatedOpacity(
-              opacity: showFirst ? 0 : 1,
-              duration: Duration(milliseconds: animationDuration),
-              child: provider.Consumer<Progress>(
-                builder: (context, progress, child) => CircularPercentIndicator(
-                  curve: Curves.fastOutSlowIn,
-                  animation: false, //!nowPlaying.playing,
-                  animationDuration: animationDuration,
-                  animateFromLastPercent: false, //true,
-                  radius: interpolate(
-                    minOuterRadius,
-                    maxOuterRadius,
-                  ),
-                  lineWidth: interpolate(
-                    minOuterLineWidth,
-                    maxOuterLineWidth,
-                  ),
-                  circularStrokeCap: CircularStrokeCap.round,
-                  percent: progress.setPercent.toDouble(),
-                  progressColor: Theme.of(context).colorScheme.primary,
-                  backgroundColor:
-                      Theme.of(context).colorScheme.primary.withAlpha(40),
-                  center: CircularPercentIndicator(
-                    curve: Curves.fastOutSlowIn,
-                    animation: false, //!nowPlaying.playing,
-                    animationDuration: animationDuration,
-                    animateFromLastPercent: false, // true,
-                    radius: interpolate(
-                      minInnerRadius,
-                      maxInnerRadius,
-                    ),
-                    lineWidth: interpolate(
-                      minInnerLineWidth,
-                      maxInnerLineWidth,
-                    ),
-                    circularStrokeCap: CircularStrokeCap.round,
-                    percent: progress.percent.toDouble(),
-                    progressColor: Theme.of(context).accentColor,
-                    backgroundColor:
-                        Theme.of(context).accentColor.withAlpha(40),
-                    center: ClipOval(
-                      child: SizedOverflowBox(
-                        size: Size.square(scale * maxContainerWidth),
-                        child: Opacity(
-                          opacity: value,
-                          child: Container(
-                            width: maxContainerWidth,
-                            height: maxContainerHeight,
-                            child: SingleChildScrollView(
-                              child: Column(
-                                mainAxisSize: MainAxisSize.max,
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: <Widget>[
-                                  Padding(
-                                    padding: const EdgeInsets.all(4.0),
-                                    child: Text(
-                                      (nowPlaying.inSet &&
-                                              nowPlaying.currentRep <=
-                                                  nowPlaying.exercise.reps)
-                                          ? nowPlaying.currentRep
-                                              .pluralString('rep')
-                                          : 'Done',
-                                      overflow: TextOverflow.clip,
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .headline2
-                                          .apply(
-                                            color: Theme.of(context)
-                                                .colorScheme
-                                                .primary,
-                                            fontSizeFactor: 0.4,
-                                          )
-                                          .copyWith(
-                                              fontWeight: FontWeight.w600),
+                                                fontWeight: FontWeight.w600),
+                                      ),
                                     ),
-                                  ),
-                                  Text(
-                                      !nowPlaying.inEnd
-                                          ? nowPlaying.currentSet.cardinal() +
-                                              ' set'
-                                          : nowPlaying.currentSet
-                                              .pluralString('set'),
-                                      overflow: TextOverflow.clip,
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .subtitle2
-                                          .apply(
-                                              color:
-                                                  Theme.of(context).accentColor,
-                                              fontWeightDelta: 2)),
-                                ],
+                                    Text(
+                                        !nowPlaying.inEnd
+                                            ? nowPlaying.currentSet.cardinal() +
+                                                ' set'
+                                            : nowPlaying.currentSet
+                                                .pluralString('set'),
+                                        overflow: TextOverflow.clip,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .subtitle2
+                                            .apply(
+                                                color: Theme.of(context)
+                                                    .accentColor,
+                                                fontWeightDelta: 2)),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
@@ -810,8 +908,8 @@ class _TimerIndicatorState extends State<TimerIndicator> {
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         );
       },
     );
@@ -821,16 +919,20 @@ class _TimerIndicatorState extends State<TimerIndicator> {
 class ExpandableSheet extends StatefulWidget {
   ExpandableSheet({
     Key key,
-    this.bottomLayer,
-    @required this.topLayer,
+    this.child,
+    @required this.sheet,
     this.initialHeight = 72,
     @required this.controller,
-    this.showController,
+    @required this.showController,
     this.onDismiss,
+    this.builder,
   }) : super(key: key);
 
-  final Widget bottomLayer;
-  final Widget topLayer;
+  final Widget child;
+  final Widget sheet;
+  final Widget Function(
+          BuildContext context, AnimationController controller, Widget child)
+      builder;
   final double initialHeight;
   final void Function() onDismiss;
 
@@ -846,19 +948,18 @@ class _ExpandableSheetState extends State<ExpandableSheet>
   bool fromStart = true;
   bool triedToDismiss = false;
 
-  AnimationController showController;
+  // AnimationController showController;
   Animation<double> showHeight;
   Animation<double> opacity;
 
   @override
-  void initState() {
-    super.initState();
-
-    showController =
-        widget.showController ?? AnimationController(vsync: this, value: 1);
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // showController =
+    //     widget.showController ?? AnimationController(vsync: this, value: 1);
 
     showHeight = Tween<double>(begin: 0, end: widget.initialHeight)
-        .animate(showController);
+        .animate(widget.showController);
 
     opacity = Tween<double>(begin: 0, end: 0.32).animate(
       CurvedAnimation(
@@ -909,11 +1010,11 @@ class _ExpandableSheetState extends State<ExpandableSheet>
                 Positioned(
                   top: 0,
                   child: AnimatedBuilder(
-                    animation: showController,
+                    animation: widget.showController,
                     builder: (context, child) => SizedBox(
                       height: constraints.maxHeight - showHeight.value,
                       width: constraints.maxWidth,
-                      child: widget.bottomLayer,
+                      child: widget.child,
                     ),
                   ),
                 ),
@@ -932,13 +1033,13 @@ class _ExpandableSheetState extends State<ExpandableSheet>
                   animation: widget.controller,
                   builder: (context, child) {
                     return AnimatedBuilder(
-                      animation: showController,
+                      animation: widget.showController,
                       builder: (context, child) {
                         Animation<double> top1 = Tween<double>(
                                 begin: constraints.maxHeight,
                                 end: constraints.maxHeight -
                                     widget.initialHeight)
-                            .animate(showController);
+                            .animate(widget.showController);
 
                         Animation<double> top2 = Tween<double>(
                                 begin: constraints.maxHeight -
@@ -947,7 +1048,7 @@ class _ExpandableSheetState extends State<ExpandableSheet>
                             .animate(widget.controller);
 
                         return Positioned(
-                          top: !showController.isCompleted
+                          top: !widget.showController.isCompleted
                               ? top1.value
                               : top2.value,
                           child: child,
@@ -983,13 +1084,15 @@ class _ExpandableSheetState extends State<ExpandableSheet>
                             setState(() {
                               triedToDismiss = false;
                             });
-                            if (showController.value < 0.85) {
-                              showController.fling(velocity: -1).then((_) {
+                            if (widget.showController.value < 0.85) {
+                              widget.showController
+                                  .fling(velocity: -1)
+                                  .then((_) {
                                 if (widget.onDismiss != null)
                                   widget.onDismiss();
                               });
                             } else {
-                              showController.fling();
+                              widget.showController.fling();
                             }
                           }
 
@@ -1026,7 +1129,7 @@ class _ExpandableSheetState extends State<ExpandableSheet>
                       ),
                     );
                   },
-                  child: widget.topLayer,
+                  child: widget.sheet,
                 ),
               ],
             );

@@ -335,23 +335,25 @@ class MenuProvider extends ChangeNotifier {
   Menu _previousMenu;
   Plan _openPlan;
   Exercise _openExercise;
-  bool _showNavBar = true;
+  // bool _showNavBar = true;
   bool _inPlanPage = false;
   bool _inExercisePage = false;
   bool _appBarElevated = false;
-  double _playCardHeight = 72;
-  double _navBarHeight = 56;
+  final double _playCardHeight = 72;
+  final double _navBarHeight = 56;
+
+  bool flippedTheme = false;
 
   final Duration pageTransitionDuration = Duration(milliseconds: 300);
   final Duration navBarTransitionDuration = Duration(milliseconds: 100);
   final Duration navBarTransitionWait = Duration(milliseconds: 300);
 
-  bool get showNavBar => _showNavBar;
+  // bool get showNavBar => _showNavBar;
 
-  set showNavBar(bool value) {
-    _showNavBar = value;
-    notifyListeners();
-  }
+  // set showNavBar(bool value) {
+  //   _showNavBar = value;
+  //   notifyListeners();
+  // }
 
   bool get inPlanPage => _inPlanPage;
 
@@ -378,10 +380,10 @@ class MenuProvider extends ChangeNotifier {
 
   double get navBarBarHeight => _navBarHeight;
 
-  set navBarBarHeight(double value) {
-    _navBarHeight = value;
-    notifyListeners();
-  }
+  // set navBarBarHeight(double value) {
+  //   // _navBarHeight = value;
+  //   notifyListeners();
+  // }
 
   Menu get menu {
     return _menu;
@@ -430,6 +432,27 @@ class MenuProvider extends ChangeNotifier {
     else if (menu == Menu.timers)
       return TimersMenu();
     else if (menu == Menu.calendar) return CalendarMenu();
+  }
+
+  SharedPreferences preferences;
+
+  Future<void> fetchPreferences() async {
+    if (preferences != null) return;
+    preferences = await SharedPreferences.getInstance();
+    flippedTheme = preferences.getBool('flippedTheme') ?? false;
+    notifyListeners();
+  }
+
+  void flipTheme() async {
+    await fetchPreferences();
+    flippedTheme = !flippedTheme;
+    preferences.setBool('flippedTheme', flippedTheme);
+    print('Flipped theme');
+    notifyListeners();
+  }
+
+  MenuProvider() {
+    fetchPreferences();
   }
 }
 

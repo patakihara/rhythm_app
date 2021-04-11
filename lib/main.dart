@@ -43,6 +43,7 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   final NowPlaying nowPlaying = NowPlaying();
+  final MenuProvider menuProvider = MenuProvider();
 
   void configureAudio() async {
     AudioSession.instance.then((session) async {
@@ -112,6 +113,9 @@ class _MyAppState extends State<MyApp> {
     super.initState();
     configureAudio();
     setUpMediaNotifications();
+    menuProvider.addListener(() {
+      setState(() {});
+    });
   }
 
   @override
@@ -127,14 +131,40 @@ class _MyAppState extends State<MyApp> {
         provider.ChangeNotifierProvider.value(
           value: this.nowPlaying.progress,
         ),
-        provider.ChangeNotifierProvider<MenuProvider>(
-          create: (_) => MenuProvider(),
+        provider.ChangeNotifierProvider.value(
+          value: this.menuProvider,
         ),
       ],
       child: MaterialApp(
         title: 'Rhythm',
-        theme: AppTheme.light(),
-        darkTheme: AppTheme.dark(),
+        theme: menuProvider.flippedTheme ? AppTheme.dark() : AppTheme.light(),
+        darkTheme:
+            menuProvider.flippedTheme ? AppTheme.light() : AppTheme.dark(),
+        home: HomePage(),
+      ),
+    );
+  }
+}
+
+class MyMaterialApp extends StatefulWidget {
+  MyMaterialApp({Key key}) : super(key: key);
+
+  @override
+  _MyMaterialAppState createState() => _MyMaterialAppState();
+}
+
+class _MyMaterialAppState extends State<MyMaterialApp> {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      child: MaterialApp(
+        title: 'Rhythm',
+        theme: context.watch<MenuProvider>().flippedTheme
+            ? AppTheme.dark()
+            : AppTheme.light(),
+        darkTheme: context.watch<MenuProvider>().flippedTheme
+            ? AppTheme.light()
+            : AppTheme.dark(),
         home: HomePage(),
       ),
     );

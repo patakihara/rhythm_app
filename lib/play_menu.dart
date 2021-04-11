@@ -32,6 +32,8 @@ class _PlayMenuState extends State<PlayMenu> with TickerProviderStateMixin {
   Animation<double> bigPlayCardHeight;
   Animation<double> timerSize;
 
+  Animation<Color> color;
+
   final double bigPlayCardMaxHeight = 56.0 * 5;
   bool openQueue = false;
 
@@ -42,7 +44,13 @@ class _PlayMenuState extends State<PlayMenu> with TickerProviderStateMixin {
         vsync: this, duration: Duration(milliseconds: 1000));
 
     showController = AnimationController(
-        vsync: this, duration: Duration(milliseconds: 5000));
+        vsync: this,
+        duration: Duration(milliseconds: 1000),
+        value: context.read<NowPlaying>().empty ? 0 : 1);
+
+    // showController.addListener(() {
+    //   print('value: ' + showController.value.toString());
+    // });
 
     controller.addStatusListener((status) {
       if (controller.isAnimating && openQueue)
@@ -117,6 +125,22 @@ class _PlayMenuState extends State<PlayMenu> with TickerProviderStateMixin {
         ),
       ),
     );
+
+    color = ColorTween(
+            begin: Theme.of(context).brightness == Brightness.dark
+                ? Colors.black
+                : Colors.white,
+            end: Theme.of(context).colorScheme.surface)
+        .animate(
+      CurvedAnimation(
+        parent: controller,
+        curve: Interval(
+          0,
+          1,
+          curve: Curves.easeInOut,
+        ),
+      ),
+    );
   }
 
   @override
@@ -129,47 +153,51 @@ class _PlayMenuState extends State<PlayMenu> with TickerProviderStateMixin {
           showController.fling(velocity: -1);
         }
         return ExpandableSheet(
-          bottomLayer: widget.child,
+          child: widget.child,
           controller: controller,
           showController: showController,
           onDismiss: nowPlaying.clear,
-          initialHeight: context.read<MenuProvider>().playCardHeight,
-          topLayer: AnimatedBuilder(
-            animation: controller,
-            builder: (context, child) {
-              return SizedBox.expand(
-                  child: Container(
-                      color: Colors.black,
-                      child: Stack(
-                        children: [
-                          buildPlayPageTop(nowPlaying, context),
-                          Stack(
-                            children: [
-                              buildSmallPlayCard(context),
-                              Column(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  SizedBox(
-                                    height: controller.value *
-                                        (56 +
-                                            MediaQuery.of(context)
-                                                .viewPadding
-                                                .top),
-                                  ),
-                                  buildTimerIndicator(),
-                                  SizedBox(
-                                    height: bigPlayCardHeight.value,
-                                  ),
-                                ],
-                              ),
-                              if (!nowPlaying.empty)
-                                buildBigPlayCard(nowPlaying, context)
-                            ],
-                          ),
-                        ],
-                      )));
-            },
+          initialHeight: context.select<MenuProvider, double>(
+              (menuProvider) => menuProvider.playCardHeight),
+          sheet: Material(
+            elevation: 8,
+            child: AnimatedBuilder(
+              animation: controller,
+              builder: (context, child) {
+                return SizedBox.expand(
+                    child: Container(
+                        color: color.value,
+                        child: Stack(
+                          children: [
+                            buildPlayPageTop(nowPlaying, context),
+                            Stack(
+                              children: [
+                                buildSmallPlayCard(context),
+                                Column(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    SizedBox(
+                                      height: controller.value *
+                                          (56 +
+                                              MediaQuery.of(context)
+                                                  .viewPadding
+                                                  .top),
+                                    ),
+                                    buildTimerIndicator(),
+                                    SizedBox(
+                                      height: bigPlayCardHeight.value,
+                                    ),
+                                  ],
+                                ),
+                                if (!nowPlaying.empty)
+                                  buildBigPlayCard(nowPlaying, context)
+                              ],
+                            ),
+                          ],
+                        )));
+              },
+            ),
           ),
         );
       },
@@ -377,7 +405,8 @@ class _PlayMenuState extends State<PlayMenu> with TickerProviderStateMixin {
             ),
             AnimatedContainer(
               curve: Curves.fastLinearToSlowEaseIn,
-              duration: context.read<MenuProvider>().pageTransitionDuration,
+              duration: context.select<MenuProvider, Duration>(
+                  (menuProvider) => menuProvider.pageTransitionDuration),
               height: () {
                 if (openQueue && controller.isCompleted) {
                   return MediaQuery.of(context).size.height -
@@ -391,45 +420,47 @@ class _PlayMenuState extends State<PlayMenu> with TickerProviderStateMixin {
                 children: [
                   ClipRect(
                     child: AnimatedContainer(
-                        color: Theme.of(context).colorScheme.background,
-                        curve: Curves.fastLinearToSlowEaseIn,
-                        duration:
-                            context.read<MenuProvider>().pageTransitionDuration,
-                        height: () {
-                          if (openQueue) {
-                            return MediaQuery.of(context).size.height -
-                                56 -
-                                MediaQuery.of(context).viewPadding.top -
-                                bigPlayCardMaxHeight;
-                          } else
-                            return 0.0;
-                        }(),
-                        child: ListView.builder(
-                            itemCount: nowPlaying.plan.exerciseNames.length,
-                            itemExtent: 72,
-                            itemBuilder: (_, int i) {
-                              bool currentlyPlaying() =>
-                                  nowPlaying.exerciseIndex == i;
-                              bool willPlayLater() =>
-                                  i > nowPlaying.exerciseIndex;
-                              bool hasPlayedBefore() =>
-                                  i < nowPlaying.exerciseIndex;
-                              return ExerciseTile(
-                                selected: currentlyPlaying(),
-                                exercise: nowPlaying.plan.exercises[i],
-                                onTap: () {
-                                  if (!currentlyPlaying()) {
-                                    if (willPlayLater())
-                                      while (!currentlyPlaying())
-                                        nowPlaying.skipForward();
-                                    else if (hasPlayedBefore())
-                                      while (!currentlyPlaying())
-                                        nowPlaying.skipBackward();
-                                    nowPlaying.play();
-                                  }
-                                },
-                              );
-                            })),
+                      color: Theme.of(context).colorScheme.background,
+                      curve: Curves.fastLinearToSlowEaseIn,
+                      duration:
+                          context.read<MenuProvider>().pageTransitionDuration,
+                      height: () {
+                        if (openQueue) {
+                          return MediaQuery.of(context).size.height -
+                              56 -
+                              MediaQuery.of(context).viewPadding.top -
+                              bigPlayCardMaxHeight;
+                        } else
+                          return 0.0;
+                      }(),
+                      child: ListView.builder(
+                        itemCount: nowPlaying.plan.exerciseNames.length,
+                        itemExtent: 72,
+                        padding: EdgeInsets.zero,
+                        itemBuilder: (_, int i) {
+                          bool currentlyPlaying() =>
+                              nowPlaying.exerciseIndex == i;
+                          bool willPlayLater() => i > nowPlaying.exerciseIndex;
+                          bool hasPlayedBefore() =>
+                              i < nowPlaying.exerciseIndex;
+                          return ExerciseTile(
+                            selected: currentlyPlaying(),
+                            exercise: nowPlaying.plan.exercises[i],
+                            onTap: () {
+                              if (!currentlyPlaying()) {
+                                if (willPlayLater())
+                                  while (!currentlyPlaying())
+                                    nowPlaying.skipForward();
+                                else if (hasPlayedBefore())
+                                  while (!currentlyPlaying())
+                                    nowPlaying.skipBackward();
+                                nowPlaying.play();
+                              }
+                            },
+                          );
+                        },
+                      ),
+                    ),
                   ),
                   Material(
                     elevation: 2,
@@ -494,16 +525,16 @@ class _PlayMenuState extends State<PlayMenu> with TickerProviderStateMixin {
                   curve: Curves.fastOutSlowIn,
                   duration: Duration(milliseconds: 500),
                   color: nowPlaying.repState == RepState.rest
-                      ? Theme.of(context).colorScheme.background
+                      ? Theme.of(context).colorScheme.background.withOpacity(.5)
                       : nowPlaying.repState == RepState.up
                           ? Theme.of(context)
                               .colorScheme
                               .primary
-                              .withOpacity(.08)
+                              .withOpacity(.06)
                           : Theme.of(context)
                               .colorScheme
                               .secondary
-                              .withOpacity(.08),
+                              .withOpacity(.06),
                 ),
                 Scaffold(
                   backgroundColor: Colors.transparent,

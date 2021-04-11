@@ -150,6 +150,60 @@ class _HomePageState extends State<HomePage> {
                                             .onSurface)
                                     .copyWith(letterSpacing: -1.0),
                               ),
+                              actions: [
+                                Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 0),
+                                    child: PopupMenuButton<AppBarMenuOptions>(
+                                      icon: Icon(
+                                        Icons.more_vert,
+                                        size: 24,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurface
+                                            .withOpacity(.87),
+                                      ),
+                                      onSelected: (AppBarMenuOptions result) {
+                                        if (result ==
+                                            AppBarMenuOptions.changeTheme) {
+                                          context
+                                              .read<MenuProvider>()
+                                              .flipTheme();
+                                        }
+                                      },
+                                      itemBuilder: (BuildContext context) =>
+                                          <PopupMenuEntry<AppBarMenuOptions>>[
+                                        PopupMenuItem<AppBarMenuOptions>(
+                                          value: AppBarMenuOptions.changeTheme,
+                                          child: ListTile(
+                                            dense: true,
+                                            // visualDensity:
+                                            //     VisualDensity(horizontal: -4, vertical: -4),
+                                            minLeadingWidth: 18,
+                                            contentPadding:
+                                                EdgeInsets.symmetric(
+                                                    horizontal: 0),
+                                            horizontalTitleGap: 8,
+                                            leading: Icon(
+                                              Theme.of(context).brightness ==
+                                                      Brightness.dark
+                                                  ? Icons.brightness_7
+                                                  : Icons.brightness_4,
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .onSurface
+                                                  .withOpacity(.87),
+                                            ),
+                                            title: Text(
+                                              'Change theme',
+
+                                              // style: Theme.of(context).textTheme.bodyText2,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ))
+                              ],
                               iconTheme: Theme.of(context).iconTheme.copyWith(
                                   color: Theme.of(context)
                                       .textTheme
@@ -296,10 +350,10 @@ class _TimersMenuState extends State<TimersMenu> with TickerProviderStateMixin {
       else
         menuProvider.appBarElevated = false;
       if (scrollController.offset - _lastOffset > 56) {
-        menuProvider.navBarBarHeight = 0;
+        // menuProvider.navBarBarHeight = 0;
         _lastOffset = scrollController.offset;
       } else if (scrollController.offset - _lastOffset < -56) {
-        menuProvider.navBarBarHeight = 56;
+        // menuProvider.navBarBarHeight = 56;
         _lastOffset = scrollController.offset;
       }
     });
@@ -597,7 +651,7 @@ class _TimersMenuState extends State<TimersMenu> with TickerProviderStateMixin {
           child: Icon(Icons.add),
           onPressed: () {
             if (menuProvider.tabMenu == TabMenu.plans) {
-              menuProvider.showNavBar = false;
+              // menuProvider.showNavBar = false;
               // Navigator.push(context, Methods.slideUpRoute(PlanPage()))
               //     .then((_) {
               //   menuProvider.inPlanPage = false;
@@ -607,7 +661,7 @@ class _TimersMenuState extends State<TimersMenu> with TickerProviderStateMixin {
               // });
               menuProvider.inPlanPage = true;
             } else {
-              menuProvider.showNavBar = false;
+              // menuProvider.showNavBar = false;
               // Navigator.push(context, Methods.slideUpRoute(ExercisePage()))
               //     .then((_) {
               //   menuProvider.inExercisePage = false;
@@ -649,10 +703,10 @@ class _HomeMenuState extends State<HomeMenu> {
       else
         menuProvider.appBarElevated = false;
       if (controller.offset - _lastOffset > 56) {
-        menuProvider.navBarBarHeight = 0;
+        // menuProvider.navBarBarHeight = 0;
         _lastOffset = controller.offset;
       } else if (controller.offset - _lastOffset < -56) {
-        menuProvider.navBarBarHeight = 56;
+        // menuProvider.navBarBarHeight = 56;
         _lastOffset = controller.offset;
       }
     });
@@ -780,3 +834,5 @@ class ListTitle extends StatelessWidget {
     );
   }
 }
+
+enum AppBarMenuOptions { changeTheme }

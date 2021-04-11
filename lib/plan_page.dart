@@ -276,8 +276,8 @@ class _PlanPageState extends State<PlanPage> with TickerProviderStateMixin {
                     updateChanged();
                   });
                 else {
-                  provider.Provider.of<MenuProvider>(context, listen: false)
-                      .showNavBar = false;
+                  // provider.Provider.of<MenuProvider>(context, listen: false)
+                  //     .showNavBar = false;
                   Navigator.push(
                       context,
                       Methods.slideUpRoute(ExercisePage(
@@ -295,8 +295,8 @@ class _PlanPageState extends State<PlanPage> with TickerProviderStateMixin {
                   Timer(
                       provider.Provider.of<MenuProvider>(context, listen: false)
                           .navBarTransitionWait, () {
-                    provider.Provider.of<MenuProvider>(context, listen: false)
-                        .showNavBar = true;
+                    // provider.Provider.of<MenuProvider>(context, listen: false)
+                    //     .showNavBar = true;
                   });
                   provider.Provider.of<MenuProvider>(context, listen: false)
                       .inExercisePage = true;
@@ -439,7 +439,7 @@ class _PlanPageState extends State<PlanPage> with TickerProviderStateMixin {
   }
 
   void closePage() {
-    context.read<MenuProvider>().showNavBar = true;
+    // context.read<MenuProvider>().showNavBar = true;
     context.read<MenuProvider>().inPlanPage = false;
     context.read<MenuProvider>().openPlan = null;
   }
@@ -469,6 +469,7 @@ class _PlanPageState extends State<PlanPage> with TickerProviderStateMixin {
               backgroundColor: Colors.transparent,
               appBar: AppBar(
                 elevation: 0,
+                brightness: Brightness.dark,
                 backgroundColor: Colors.transparent,
                 textTheme: Theme.of(context).textTheme,
                 actionsIconTheme: Theme.of(context).primaryIconTheme,
@@ -498,52 +499,56 @@ class _PlanPageState extends State<PlanPage> with TickerProviderStateMixin {
                               child: provider.Consumer<Library>(
                                 builder: (context, library, child) => Theme(
                                   data: ThemeData(brightness: Brightness.dark),
-                                  child: TextFormField(
-                                    autofocus: editing &&
-                                        plan == null &&
-                                        (name == null || name.isEmpty),
-                                    readOnly: !editing,
-                                    initialValue: name,
-                                    textCapitalization:
-                                        TextCapitalization.sentences,
-                                    autocorrect: true,
-                                    autovalidateMode:
-                                        AutovalidateMode.onUserInteraction,
-                                    validator: (value) {
-                                      var counts =
-                                          provider.Provider.of<Library>(context)
-                                              .planNameCounts;
-                                      if (value.isEmpty) {
-                                        return 'You have to enter a name.';
-                                      } else if (counts[name] == null) {
-                                        return null;
-                                      } else if (plan == null) {
-                                        return 'Plan already exists.';
-                                      } else if (counts[name] > 1) {
-                                        return 'Plan already exists.';
-                                      } else if (name != plan.name) {
-                                        return 'Plan already exists.';
-                                      } else {
-                                        return null;
-                                      }
-                                    },
-                                    decoration: InputDecoration(
-                                        // labelText: 'Name',
-                                        hintText: 'New plan',
-                                        border: InputBorder.none),
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .headline5
-                                        .apply(
-                                            color: Colors.white,
-                                            fontWeightDelta: 1),
-                                    onChanged: (newValue) {
-                                      setState(() {
-                                        name = newValue;
-                                        updateChanged();
-                                      });
-                                      //print(name);
-                                    },
+                                  child: IgnorePointer(
+                                    ignoring: !editing,
+                                    child: TextFormField(
+                                      autofocus: editing &&
+                                          plan == null &&
+                                          (name == null || name.isEmpty),
+                                      readOnly: !editing,
+                                      initialValue: name,
+                                      textCapitalization:
+                                          TextCapitalization.sentences,
+                                      autocorrect: true,
+                                      autovalidateMode:
+                                          AutovalidateMode.onUserInteraction,
+                                      validator: (value) {
+                                        var counts =
+                                            provider.Provider.of<Library>(
+                                                    context)
+                                                .planNameCounts;
+                                        if (value.isEmpty) {
+                                          return 'You have to enter a name.';
+                                        } else if (counts[name] == null) {
+                                          return null;
+                                        } else if (plan == null) {
+                                          return 'Plan already exists.';
+                                        } else if (counts[name] > 1) {
+                                          return 'Plan already exists.';
+                                        } else if (name != plan.name) {
+                                          return 'Plan already exists.';
+                                        } else {
+                                          return null;
+                                        }
+                                      },
+                                      decoration: InputDecoration(
+                                          // labelText: 'Name',
+                                          hintText: 'New plan',
+                                          border: InputBorder.none),
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .headline5
+                                          .apply(
+                                              color: Colors.white,
+                                              fontWeightDelta: 1),
+                                      onChanged: (newValue) {
+                                        setState(() {
+                                          name = newValue;
+                                          updateChanged();
+                                        });
+                                        //print(name);
+                                      },
+                                    ),
                                   ),
                                 ),
                               ),
