@@ -69,8 +69,8 @@ class _ExercisePageState extends State<ExercisePage>
       reps.text = exercise.reps.toString();
       secsStart.text = exercise.secsStart.toString();
       secsRest.text = exercise.secsRest.toString();
-      secsUp.text = exercise.secsUp.toString();
-      secsDown.text = exercise.secsDown.toString();
+      secsUp.text = exercise.ticTime.toString();
+      secsDown.text = exercise.tocTime.toString();
       _changed = false;
       _valid = true;
     } else {
@@ -113,8 +113,8 @@ class _ExercisePageState extends State<ExercisePage>
             reps.text == exercise.reps.toString() &&
             secsStart.text == exercise.secsStart.toString() &&
             secsRest.text == exercise.secsRest.toString() &&
-            secsUp.text == exercise.secsUp.toString() &&
-            secsDown.text == exercise.secsDown.toString());
+            secsUp.text == exercise.ticTime.toString() &&
+            secsDown.text == exercise.tocTime.toString());
       } else
         _changed = true;
     });
@@ -140,8 +140,8 @@ class _ExercisePageState extends State<ExercisePage>
         reps.text = exercise.reps.toString();
         secsStart.text = exercise.secsStart.toString();
         secsRest.text = exercise.secsRest.toString();
-        secsUp.text = exercise.secsUp.toString();
-        secsDown.text = exercise.secsDown.toString();
+        secsUp.text = exercise.ticTime.toString();
+        secsDown.text = exercise.tocTime.toString();
       });
       FocusScope.of(context).unfocus();
     }
@@ -442,8 +442,8 @@ class _ExercisePageState extends State<ExercisePage>
                                 reps: int.parse(reps.text),
                                 secsStart: num.parse(secsStart.text),
                                 secsRest: num.parse(secsRest.text),
-                                secsUp: num.parse(secsUp.text),
-                                secsDown: num.parse(secsDown.text));
+                                ticTime: num.parse(secsUp.text),
+                                tocTime: num.parse(secsDown.text));
                             if (exercise == null) {
                               exercise = newExercise;
                               provider.Provider.of<Library>(context,

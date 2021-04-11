@@ -217,6 +217,8 @@ class _PlayMenuState extends State<PlayMenu> with TickerProviderStateMixin {
   }
 
   Widget buildBigPlayCard(NowPlaying nowPlaying, BuildContext context) {
+    print('Timer duration is: ' + nowPlaying.duration.toString());
+
     return IgnorePointer(
       ignoring: controller.isDismissed,
       child: Align(
@@ -392,22 +394,22 @@ class _PlayMenuState extends State<PlayMenu> with TickerProviderStateMixin {
                                       setState(() => openQueue = !openQueue);
                                     },
                                     title: Text(
-                                        nowPlaying.exerciseIndex <
-                                                nowPlaying.plan.exerciseNames
-                                                        .length -
-                                                    1
-                                            ? 'Up next: ' +
-                                                nowPlaying.plan.exerciseNames[
-                                                    nowPlaying.exerciseIndex +
-                                                        1]
-                                            : 'Last exercise',
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .caption
-                                            .apply(
-                                                color: Theme.of(context)
-                                                    .iconTheme
-                                                    .color)),
+                                      nowPlaying.exerciseIndex <
+                                              nowPlaying.plan.exerciseNames
+                                                      .length -
+                                                  1
+                                          ? 'Up next: ' +
+                                              nowPlaying.plan.exerciseNames[
+                                                  nowPlaying.exerciseIndex + 1]
+                                          : 'Last exercise',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .caption
+                                          .apply(
+                                              color: Theme.of(context)
+                                                  .iconTheme
+                                                  .color),
+                                    ),
                                   ),
                                 ),
                               )

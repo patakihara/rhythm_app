@@ -283,9 +283,9 @@ class ExerciseTile extends StatelessWidget {
   }
 
   String get tileSubtitle {
-    return exercise.secsUp.pluralString('sec') +
+    return exercise.ticTime.pluralString('sec') +
         ' up, ' +
-        exercise.secsDown.pluralString('sec') +
+        exercise.tocTime.pluralString('sec') +
         ' down, ' +
         exercise.secsRest.pluralString('sec') +
         ' rest';
@@ -555,6 +555,9 @@ class _PlayCardState extends State<PlayCard> with TickerProviderStateMixin {
                                 progress: playStateController,
                                 icon: AnimatedIcons.play_pause,
                               ),
+                              disabledColor: Color.alphaBlend(
+                                  Theme.of(context).disabledColor,
+                                  Theme.of(context).colorScheme.surface),
                               color: Color.alphaBlend(
                                   Theme.of(context).iconTheme.color,
                                   Theme.of(context).colorScheme.surface),
@@ -1008,6 +1011,8 @@ class _ExpandableSheetState extends State<ExpandableSheet> {
     });
   }
 
+  BoxConstraints actualConstraints;
+
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
@@ -1022,9 +1027,11 @@ class _ExpandableSheetState extends State<ExpandableSheet> {
       child: SizedBox.expand(
         child: LayoutBuilder(
           builder: (context, constraints) {
+            if (actualConstraints == null) actualConstraints = constraints;
+
             Animation<double> height = Tween<double>(
               begin: widget.initialHeight,
-              end: constraints.maxHeight,
+              end: actualConstraints.maxHeight,
             ).animate(widget.controller);
 
             return Stack(
@@ -1035,8 +1042,9 @@ class _ExpandableSheetState extends State<ExpandableSheet> {
                   child: AnimatedBuilder(
                     animation: widget.showController,
                     builder: (context, child) => SizedBox(
-                      height: constraints.maxHeight - widget.showHeight.value,
-                      width: constraints.maxWidth,
+                      height:
+                          actualConstraints.maxHeight - widget.showHeight.value,
+                      width: actualConstraints.maxWidth,
                       child: widget.child,
                     ),
                   ),
@@ -1059,13 +1067,13 @@ class _ExpandableSheetState extends State<ExpandableSheet> {
                       animation: widget.showController,
                       builder: (context, child) {
                         Animation<double> top1 = Tween<double>(
-                                begin: constraints.maxHeight,
-                                end: constraints.maxHeight -
+                                begin: actualConstraints.maxHeight,
+                                end: actualConstraints.maxHeight -
                                     widget.initialHeight)
                             .animate(widget.showController);
 
                         Animation<double> top2 = Tween<double>(
-                                begin: constraints.maxHeight -
+                                begin: actualConstraints.maxHeight -
                                     widget.initialHeight,
                                 end: 0)
                             .animate(widget.controller);
@@ -1085,7 +1093,8 @@ class _ExpandableSheetState extends State<ExpandableSheet> {
                         },
                         onVerticalDragUpdate: (details) {
                           final newValue = widget.controller.value -
-                              details.primaryDelta / constraints.maxHeight;
+                              details.primaryDelta /
+                                  actualConstraints.maxHeight;
                           if (!triedToDismiss &&
                               newValue >= 0 &&
                               newValue <= 1) {
@@ -1122,7 +1131,7 @@ class _ExpandableSheetState extends State<ExpandableSheet> {
                           final threshold = 2.0;
                           final velocity =
                               -details.velocity.pixelsPerSecond.dy /
-                                  constraints.maxHeight;
+                                  actualConstraints.maxHeight;
 
                           final velocityCheck = velocity.abs() >= threshold;
                           final positionCheck =
@@ -1146,7 +1155,7 @@ class _ExpandableSheetState extends State<ExpandableSheet> {
                         },
                         child: SizedBox(
                           height: height.value,
-                          width: constraints.maxWidth,
+                          width: actualConstraints.maxWidth,
                           child: child,
                         ),
                       ),

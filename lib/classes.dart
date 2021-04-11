@@ -293,8 +293,8 @@ class Exercise implements Data {
   final String name;
   final int reps;
   final int sets;
-  final num secsUp;
-  final num secsDown;
+  final num ticTime;
+  final num tocTime;
   final num secsRest;
   final num secsStart;
   final bool upFirst;
@@ -312,11 +312,11 @@ class Exercise implements Data {
       {@required this.name,
       this.reps = 3,
       this.sets = 3,
-      this.secsUp = 2,
-      this.secsDown = 3,
+      this.ticTime = 2,
+      this.tocTime = 3,
       this.secsRest = 30,
       this.secsStart = 15,
-      this.upFirst = true,
+      this.upFirst = false,
       this.key}) {
     if (key == null) key = DateTime.now().toString();
     print(key);
@@ -335,19 +335,19 @@ class Exercise implements Data {
       : this.name = json['name'],
         this.reps = json['reps'].toInt(),
         this.sets = json['sets'].toInt(),
-        this.secsUp = json['secsUp'],
-        this.secsDown = json['secsDown'],
+        this.ticTime = json['secsUp'],
+        this.tocTime = json['secsDown'],
         this.secsRest = json['secsRest'],
         this.secsStart = json['secsStart'],
-        this.upFirst = json['upFirst'],
+        this.upFirst = false,
         this.key = json['key'];
 
   Map<String, dynamic> toJson() => {
         'name': name,
         'reps': reps,
         'sets': sets,
-        'secsUp': secsUp,
-        'secsDown': secsDown,
+        'secsUp': ticTime,
+        'secsDown': tocTime,
         'secsRest': secsRest,
         'secsStart': secsStart,
         'upFirst': upFirst,
@@ -370,7 +370,8 @@ class Exercise implements Data {
   Duration get duration {
     if (_duration != null) return _duration;
     _duration = ExerciseDurations.whole(
-        reps, sets, secsUp, secsDown, secsRest, secsStart);
+        reps, sets, tocTime, ticTime, secsRest, secsStart);
+    print('Exercise tile duration: $_duration');
     return _duration;
   }
 
@@ -494,11 +495,11 @@ extension NumberParsing on num {
 
 extension DurationParsing on Duration {
   String minutesSeconds() {
-    var res = this.toString();
-    var split = res.split(':');
-    res = split[1] + ':' + split[2];
-    res = res.split('.')[0];
-    return res;
+    var duration = this;
+    String twoDigits(int n) => n.toString().padLeft(2, "0");
+    String twoDigitSeconds =
+        twoDigits((duration.inMilliseconds / 1000).round().remainder(60));
+    return "${(duration.inMinutes.toString())}:$twoDigitSeconds";
   }
 }
 
@@ -563,8 +564,8 @@ class ExerciseTimer extends ChangeNotifier {
     this.duckAudio,
   }) : numBeepers = exercise.phases.length {
     metronome = Metronome(
-      Duration(milliseconds: (exercise.secsUp * 1000).round()),
-      Duration(milliseconds: (exercise.secsDown * 1000).round()),
+      Duration(milliseconds: (exercise.ticTime * 1000).round()),
+      Duration(milliseconds: (exercise.tocTime * 1000).round()),
       exercise.reps,
       onToc: doAfterToc,
       onTic: doAfterTic,
@@ -677,9 +678,10 @@ class ExerciseTimer extends ChangeNotifier {
   }
 
   void skipPrevious() {
-    if (index < numBeepers && currentBeeper.position > Duration(seconds: 2))
+    if (index < numBeepers && currentBeeper.position > Duration(seconds: 2)) {
       _resetTimer();
-    else
+      if (ended) ended = false;
+    } else
       _previousTimer();
   }
 
@@ -826,11 +828,18 @@ abstract class Beeper {
     print('$typeName stopped');
   }
 
-  void reset() {
+  Future<void> reset() async {
     assert(!disposed, '$typeName has been disposed, cannot reset');
     print('$typeName reset');
+    audioPlayer.pause();
     if (progress > 0) {
-      audioPlayer.seek(Duration(seconds: 0), index: 0);
+      // audioPlayer.seek(Duration(seconds: 0), index: 0);
+      while (audioPlayer.currentIndex > 0) {
+        await audioPlayer.seekToPrevious();
+        // await audioPlayer.pause();
+      }
+      audioPlayer.seek(Duration(seconds: 0));
+      audioPlayer.pause();
       _position = Duration.zero;
     }
     audioPlayer.pause();
@@ -1030,8 +1039,8 @@ class Metronome extends Beeper {
   }
 
   @override
-  void reset() {
-    super.reset();
+  Future<void> reset() async {
+    await super.reset();
     _currentCycle = 0;
   }
 
