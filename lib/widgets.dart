@@ -555,6 +555,9 @@ class _PlayCardState extends State<PlayCard> with TickerProviderStateMixin {
                                 progress: playStateController,
                                 icon: AnimatedIcons.play_pause,
                               ),
+                              color: Color.alphaBlend(
+                                  Theme.of(context).iconTheme.color,
+                                  Theme.of(context).colorScheme.surface),
                               onPressed: !nowPlaying.empty && !nowPlaying.ended
                                   ? nowPlaying.togglePlay
                                   : null),
