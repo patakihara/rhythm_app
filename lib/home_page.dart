@@ -293,6 +293,9 @@ class _TimersMenuState extends State<TimersMenu> with TickerProviderStateMixin {
 
   bool showAllPlans = true;
 
+  Animation<double> fabSize;
+  Animation<double> fabOpacity;
+
   @override
   void initState() {
     var menuProvider =
@@ -313,16 +316,33 @@ class _TimersMenuState extends State<TimersMenu> with TickerProviderStateMixin {
     });
     tabController = TabController(length: 2, vsync: this);
     tabController.index = (menuProvider.tabMenu == TabMenu.plans) ? 0 : 1;
+
+    tabController.animation.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        menuProvider.appBarElevated = false;
+      }
+    });
+
     tabController.addListener(() {
+      // if ((tabController.index == 0 && menuProvider.tabMenu != TabMenu.plans) ||
+      //     (tabController.index == 1 &&
+      //         menuProvider.tabMenu != TabMenu.exercises)) {
+      //   menuProvider.appBarElevated = false;
+      // }
+
       if (tabController.index == 0) {
         menuProvider.tabMenu = TabMenu.plans;
       } else {
         menuProvider.tabMenu = TabMenu.exercises;
       }
-      if (tabController.previousIndex != tabController.index ||
-          tabController.indexIsChanging) {
+
+      if ((tabController.animation.value == 0.0 ||
+              tabController.animation.value == 1.0) &&
+          tabController.previousIndex.toDouble() !=
+              tabController.animation.value) {
         menuProvider.appBarElevated = false;
       }
+
       // if (tabController.indexIsChanging)
       //
 
@@ -331,6 +351,21 @@ class _TimersMenuState extends State<TimersMenu> with TickerProviderStateMixin {
       //   menuProvider.appBarElevated = false;
       // }
     });
+
+    fabSize = Tween<double>(begin: -56, end: 56).animate(
+      CurvedAnimation(
+        parent: tabController.animation,
+        curve: Curves.easeInOut,
+      ),
+    );
+
+    fabOpacity = Tween<double>(begin: -1, end: 1).animate(
+      CurvedAnimation(
+        parent: tabController.animation,
+        curve: Curves.easeInOut,
+      ),
+    );
+
     super.initState();
   }
 
@@ -606,32 +641,47 @@ class _TimersMenuState extends State<TimersMenu> with TickerProviderStateMixin {
         ],
       ),
       floatingActionButton: provider.Consumer<MenuProvider>(
-        builder: (context, menuProvider, child) => FloatingActionButton(
-          heroTag: menuProvider.tabMenu,
-          child: Icon(Icons.add),
-          onPressed: () {
-            if (menuProvider.tabMenu == TabMenu.plans) {
-              // menuProvider.showNavBar = false;
-              // Navigator.push(context, Methods.slideUpRoute(PlanPage()))
-              //     .then((_) {
-              //   menuProvider.inPlanPage = false;
-              // });
-              // Timer(menuProvider.navBarTransitionWait, () {
-              //   menuProvider.showNavBar = true;
-              // });
-              menuProvider.inPlanPage = true;
-            } else {
-              // menuProvider.showNavBar = false;
-              // Navigator.push(context, Methods.slideUpRoute(ExercisePage()))
-              //     .then((_) {
-              //   menuProvider.inExercisePage = false;
-              // });
-              // Timer(menuProvider.navBarTransitionWait, () {
-              //   menuProvider.showNavBar = true;
-              // });
-              menuProvider.inExercisePage = true;
-            }
-          },
+        builder: (context, menuProvider, child) => SizedBox(
+          // width: 56,
+          // height: 56,
+          child: AnimatedBuilder(
+            animation: tabController.animation,
+            builder: (context, child) => Padding(
+              padding: EdgeInsets.all((56 - fabSize.value.abs()) / 2),
+              child: Material(
+                shape: CircleBorder(),
+                elevation: 8,
+                child: ClipOval(
+                  child: SizedOverflowBox(
+                    size: Size.square(fabSize.value.abs()),
+                    child: FloatingActionButton(
+                      heroTag: menuProvider.tabMenu,
+                      child: ClipOval(
+                        child: SizedOverflowBox(
+                          size: Size.square(
+                            (fabSize.value.abs() - 32).clamp(
+                              0.0,
+                              24.0,
+                            ),
+                          ),
+                          child: Icon(
+                            Icons.add,
+                          ),
+                        ),
+                      ),
+                      onPressed: () {
+                        if (menuProvider.tabMenu == TabMenu.plans) {
+                          menuProvider.inPlanPage = true;
+                        } else {
+                          menuProvider.inExercisePage = true;
+                        }
+                      },
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
         ),
       ),
     );
