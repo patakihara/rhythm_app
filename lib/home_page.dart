@@ -293,6 +293,7 @@ class _TimersMenuState extends State<TimersMenu> with TickerProviderStateMixin {
 
   bool showAllPlans = true;
 
+  AnimationController fabController;
   Animation<double> fabSize;
   Animation<double> fabOpacity;
 
@@ -320,6 +321,19 @@ class _TimersMenuState extends State<TimersMenu> with TickerProviderStateMixin {
     tabController.animation.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
         menuProvider.appBarElevated = false;
+      }
+    });
+
+    tabController.animation.addListener(() {
+      final value = tabController.animation.value;
+      if ((value < 0.9 && value > 0.1) &&
+          (fabController.isCompleted ||
+              fabController.status == AnimationStatus.forward)) {
+        fabController.fling(velocity: -2);
+      } else if ((value > 0.9 || value < 0.1) &&
+          (fabController.isDismissed ||
+              fabController.status == AnimationStatus.reverse)) {
+        fabController.fling(velocity: 2);
       }
     });
 
@@ -352,26 +366,9 @@ class _TimersMenuState extends State<TimersMenu> with TickerProviderStateMixin {
       // }
     });
 
-    fabSize = TweenSequence(
-      <TweenSequenceItem<double>>[
-        TweenSequenceItem<double>(
-          tween: Tween<double>(begin: 56, end: 0).chain(
-            CurveTween(curve: Curves.ease),
-          ),
-          weight: 40.0,
-        ),
-        TweenSequenceItem<double>(
-          tween: ConstantTween<double>(0),
-          weight: 20.0,
-        ),
-        TweenSequenceItem<double>(
-          tween: Tween<double>(begin: 0, end: 56).chain(
-            CurveTween(curve: Curves.ease),
-          ),
-          weight: 40.0,
-        ),
-      ],
-    ).animate(tabController.animation);
+    fabController = AnimationController(vsync: this, value: 1);
+
+    fabSize = Tween<double>(begin: 0, end: 56).animate(fabController);
 
     fabOpacity = Tween<double>(begin: -1, end: 1).animate(
       CurvedAnimation(
@@ -656,7 +653,7 @@ class _TimersMenuState extends State<TimersMenu> with TickerProviderStateMixin {
       ),
       floatingActionButton: provider.Consumer<MenuProvider>(
         builder: (context, menuProvider, child) => AnimatedBuilder(
-          animation: tabController.animation,
+          animation: fabController,
           builder: (context, child) => Padding(
             padding: EdgeInsets.all((56 - fabSize.value.abs()) / 2),
             child: Material(

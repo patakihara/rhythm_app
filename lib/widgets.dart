@@ -936,7 +936,19 @@ class ExpandableSheet extends StatefulWidget {
     @required this.showController,
     this.onDismiss,
     this.builder,
-  }) : super(key: key);
+  })  : this.showHeight =
+            Tween<double>(begin: 0, end: initialHeight).animate(showController),
+        this.opacity = Tween<double>(begin: 0, end: 0.32).animate(
+          CurvedAnimation(
+            parent: controller,
+            curve: Interval(
+              0,
+              0.5,
+              curve: Curves.linear,
+            ),
+          ),
+        ),
+        super(key: key);
 
   final Widget child;
   final Widget sheet;
@@ -949,18 +961,16 @@ class ExpandableSheet extends StatefulWidget {
   final AnimationController controller;
   final AnimationController showController;
 
+  final Animation<double> showHeight;
+  final Animation<double> opacity;
+
   @override
   _ExpandableSheetState createState() => _ExpandableSheetState();
 }
 
-class _ExpandableSheetState extends State<ExpandableSheet>
-    with SingleTickerProviderStateMixin {
+class _ExpandableSheetState extends State<ExpandableSheet> {
   bool fromStart = true;
   bool triedToDismiss = false;
-
-  // AnimationController showController;
-  Animation<double> showHeight;
-  Animation<double> opacity;
 
   @override
   void didChangeDependencies() {
@@ -968,19 +978,19 @@ class _ExpandableSheetState extends State<ExpandableSheet>
     // showController =
     //     widget.showController ?? AnimationController(vsync: this, value: 1);
 
-    showHeight = Tween<double>(begin: 0, end: widget.initialHeight)
-        .animate(widget.showController);
+    // showHeight = Tween<double>(begin: 0, end: widget.initialHeight)
+    //     .animate(widget.showController);
 
-    opacity = Tween<double>(begin: 0, end: 0.32).animate(
-      CurvedAnimation(
-        parent: widget.controller,
-        curve: Interval(
-          0,
-          0.5,
-          curve: Curves.linear,
-        ),
-      ),
-    );
+    // opacity = Tween<double>(begin: 0, end: 0.32).animate(
+    //   CurvedAnimation(
+    //     parent: widget.controller,
+    //     curve: Interval(
+    //       0,
+    //       0.5,
+    //       curve: Curves.linear,
+    //     ),
+    //   ),
+    // );
 
     widget.controller.addStatusListener((status) {
       if (widget.controller.isCompleted)
@@ -1022,7 +1032,7 @@ class _ExpandableSheetState extends State<ExpandableSheet>
                   child: AnimatedBuilder(
                     animation: widget.showController,
                     builder: (context, child) => SizedBox(
-                      height: constraints.maxHeight - showHeight.value,
+                      height: constraints.maxHeight - widget.showHeight.value,
                       width: constraints.maxWidth,
                       child: widget.child,
                     ),
@@ -1032,7 +1042,7 @@ class _ExpandableSheetState extends State<ExpandableSheet>
                   ignoring: widget.controller.isDismissed,
                   child: SizedBox.expand(
                     child: FadeTransition(
-                      opacity: opacity,
+                      opacity: widget.opacity,
                       child: Container(
                         color: Colors.black,
                       ),

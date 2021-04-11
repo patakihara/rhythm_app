@@ -226,6 +226,8 @@ class _ExercisePageState extends State<ExercisePage>
   @override
   Widget build(BuildContext context) {
     if (context.watch<NowPlaying>().playing &&
+        context.watch<NowPlaying>().plan.name == '' &&
+        context.watch<NowPlaying>().exercise.name == exercise.name &&
         playStateController.isDismissed) {
       playStateController.fling();
     } else if (!context.watch<NowPlaying>().playing &&
@@ -492,7 +494,9 @@ class _ExercisePageState extends State<ExercisePage>
                             ),
                             onPressed: () {
                               if (nowPlaying.empty ||
-                                  nowPlaying.exercise.name != exercise.name)
+                                  (nowPlaying.plan.name != '' &&
+                                      nowPlaying.exercise.name !=
+                                          exercise.name))
                                 nowPlaying.changePlan(
                                     Plan.fromList('', [exercise.name])
                                         .withParent(exercise.parent));

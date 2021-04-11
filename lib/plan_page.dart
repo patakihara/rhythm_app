@@ -483,6 +483,7 @@ class _PlanPageState extends State<PlanPage> with TickerProviderStateMixin {
     var initialHeight = height1 > height2 ? height2 : height1;
 
     if (context.watch<NowPlaying>().playing &&
+        context.watch<NowPlaying>().plan.name == plan.name &&
         playStateController.isDismissed) {
       playStateController.fling();
     } else if (!context.watch<NowPlaying>().playing &&
