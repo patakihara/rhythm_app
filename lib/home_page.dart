@@ -117,7 +117,6 @@ class _HomePageState extends State<HomePage> {
                       key: ValueKey('homePage'),
                       child: Scaffold(
                         key: ValueKey('scaffoldHomePage'), //scaffoldKey,
-                                  decoration: BoxDecoration(
                         appBar: PreferredSize(
                           preferredSize: Size.fromHeight(56),
                           child: Material(
