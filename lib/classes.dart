@@ -705,14 +705,18 @@ abstract class Beeper {
   Duration get duration =>
       durations.reduce((value, element) => value + element);
 
+  Duration _position = Duration.zero;
+
   Duration get position {
     if (disposed || _ended) return duration;
-    return (audioIndex > 0
+    final newPosition = (audioIndex > 0
             ? durations
                 .sublist(0, audioIndex)
                 .reduce((value, element) => value + element)
             : Duration.zero) +
         (audioPlayer.position ?? Duration.zero);
+    if (newPosition > _position) _position = newPosition;
+    return _position;
   }
 
   double get progress => (position.inMicroseconds / duration.inMicroseconds)
@@ -825,7 +829,10 @@ abstract class Beeper {
   void reset() {
     assert(!disposed, '$typeName has been disposed, cannot reset');
     print('$typeName reset');
-    if (progress > 0) audioPlayer.seek(Duration(seconds: 0), index: 0);
+    if (progress > 0) {
+      audioPlayer.seek(Duration(seconds: 0), index: 0);
+      _position = Duration.zero;
+    }
     audioPlayer.pause();
     if (running) {
       audioPlayer.play();
