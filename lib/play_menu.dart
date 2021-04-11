@@ -37,6 +37,8 @@ class _PlayMenuState extends State<PlayMenu> with TickerProviderStateMixin {
   final double bigPlayCardMaxHeight = 56.0 * 5;
   bool openQueue = false;
 
+  AnimationController playStateController;
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -141,6 +143,8 @@ class _PlayMenuState extends State<PlayMenu> with TickerProviderStateMixin {
         ),
       ),
     );
+
+    playStateController = AnimationController(vsync: this);
   }
 
   @override
@@ -152,6 +156,13 @@ class _PlayMenuState extends State<PlayMenu> with TickerProviderStateMixin {
         } else if (nowPlaying.empty && showController.isCompleted) {
           showController.fling(velocity: -1);
         }
+
+        if (nowPlaying.playing && playStateController.isDismissed) {
+          playStateController.fling();
+        } else if (!nowPlaying.playing && playStateController.isCompleted) {
+          playStateController.fling(velocity: -1);
+        }
+
         return ExpandableSheet(
           child: widget.child,
           controller: controller,
@@ -321,10 +332,9 @@ class _PlayMenuState extends State<PlayMenu> with TickerProviderStateMixin {
                                             .colorScheme
                                             .secondary
                                         : Theme.of(context).disabledColor,
-                                    child: Icon(
-                                      !nowPlaying.playing
-                                          ? Icons.play_arrow
-                                          : Icons.pause,
+                                    child: AnimatedIcon(
+                                      progress: playStateController,
+                                      icon: AnimatedIcons.play_pause,
                                       color: Theme.of(context)
                                           .colorScheme
                                           .onSecondary,

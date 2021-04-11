@@ -41,6 +41,8 @@ class _PlanPageState extends State<PlanPage> with TickerProviderStateMixin {
   AnimationController editStateController;
   Animation<double> fabSize;
 
+  AnimationController playStateController;
+
   Plan plan;
 
   AnimationController appBarHeightController;
@@ -163,6 +165,8 @@ class _PlanPageState extends State<PlanPage> with TickerProviderStateMixin {
         curve: Curves.ease,
       ),
     );
+
+    playStateController = AnimationController(vsync: this);
 
     super.initState();
     if (widget.plan == null) appBarHeightController.fling();
@@ -478,6 +482,14 @@ class _PlanPageState extends State<PlanPage> with TickerProviderStateMixin {
         MediaQuery.of(context).viewPadding.top;
     var initialHeight = height1 > height2 ? height2 : height1;
 
+    if (context.watch<NowPlaying>().playing &&
+        playStateController.isDismissed) {
+      playStateController.fling();
+    } else if (!context.watch<NowPlaying>().playing &&
+        playStateController.isCompleted) {
+      playStateController.fling(velocity: -1);
+    }
+
     return WillPopScope(
       onWillPop: onBackPressed,
       child: Scaffold(
@@ -732,13 +744,10 @@ class _PlanPageState extends State<PlanPage> with TickerProviderStateMixin {
                                           24.0,
                                         ),
                                       ),
-                                      child: plan == null ||
-                                              nowPlaying.empty ||
-                                              nowPlaying.plan.name !=
-                                                  plan.name ||
-                                              !nowPlaying.playing
-                                          ? Icon(Icons.play_arrow)
-                                          : Icon(Icons.pause),
+                                      child: AnimatedIcon(
+                                        progress: playStateController,
+                                        icon: AnimatedIcons.play_pause,
+                                      ),
                                     ),
                                   ),
                                   onPressed: () {

@@ -41,6 +41,8 @@ class _ExercisePageState extends State<ExercisePage>
   AnimationController editStateController;
   Animation<double> fabSize;
 
+  AnimationController playStateController;
+
   Exercise exercise;
 
   bool fromTile;
@@ -97,6 +99,8 @@ class _ExercisePageState extends State<ExercisePage>
         curve: Curves.ease,
       ),
     );
+
+    playStateController = AnimationController(vsync: this);
 
     super.initState();
   }
@@ -221,6 +225,14 @@ class _ExercisePageState extends State<ExercisePage>
 
   @override
   Widget build(BuildContext context) {
+    if (context.watch<NowPlaying>().playing &&
+        playStateController.isDismissed) {
+      playStateController.fling();
+    } else if (!context.watch<NowPlaying>().playing &&
+        playStateController.isCompleted) {
+      playStateController.fling(velocity: -1);
+    }
+
     return WillPopScope(
       onWillPop: onBackPressed,
       child: Scaffold(
@@ -472,13 +484,10 @@ class _ExercisePageState extends State<ExercisePage>
                                     24.0,
                                   ),
                                 ),
-                                child: exercise == null ||
-                                        nowPlaying.empty ||
-                                        nowPlaying.exercise.name !=
-                                            exercise.name ||
-                                        !nowPlaying.playing
-                                    ? Icon(Icons.play_arrow)
-                                    : Icon(Icons.pause),
+                                child: AnimatedIcon(
+                                  progress: playStateController,
+                                  icon: AnimatedIcons.play_pause,
+                                ),
                               ),
                             ),
                             onPressed: () {

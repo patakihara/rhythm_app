@@ -415,9 +415,10 @@ class PlayCard extends StatefulWidget {
   _PlayCardState createState() => _PlayCardState();
 }
 
-class _PlayCardState extends State<PlayCard>
-    with SingleTickerProviderStateMixin {
+class _PlayCardState extends State<PlayCard> with TickerProviderStateMixin {
   AnimationController ticker;
+
+  AnimationController playStateController;
 
   @override
   void initState() {
@@ -427,6 +428,8 @@ class _PlayCardState extends State<PlayCard>
       provider.Provider.of<NowPlaying>(context, listen: false).updateTime();
     });
     ticker.repeat();
+
+    playStateController = AnimationController(vsync: this);
     super.initState();
   }
 
@@ -439,6 +442,12 @@ class _PlayCardState extends State<PlayCard>
   @override
   Widget build(BuildContext context) {
     return provider.Consumer<NowPlaying>(builder: (context, nowPlaying, child) {
+      if (nowPlaying.playing && playStateController.isDismissed) {
+        playStateController.fling();
+      } else if (!nowPlaying.playing && playStateController.isCompleted) {
+        playStateController.fling(velocity: -1);
+      }
+
       return InkWell(
         onTap: widget.action,
         child: Stack(
@@ -542,9 +551,10 @@ class _PlayCardState extends State<PlayCard>
                           ),
                           IconButton(
                               splashRadius: 24,
-                              icon: Icon(nowPlaying.empty || !nowPlaying.playing
-                                  ? Icons.play_arrow
-                                  : Icons.pause),
+                              icon: AnimatedIcon(
+                                progress: playStateController,
+                                icon: AnimatedIcons.play_pause,
+                              ),
                               onPressed: !nowPlaying.empty && !nowPlaying.ended
                                   ? nowPlaying.togglePlay
                                   : null),
