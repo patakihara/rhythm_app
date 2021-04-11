@@ -16,16 +16,30 @@ class ExercisePage extends StatefulWidget {
   _ExercisePageState createState() => _ExercisePageState();
 }
 
-class _ExercisePageState extends State<ExercisePage> {
-  bool _editing;
+class _ExercisePageState extends State<ExercisePage>
+    with TickerProviderStateMixin {
+  bool __editing;
   bool _valid;
   bool _changed;
   bool _deleting;
 
-  bool get editing => _editing;
+  bool get editing => __editing;
   bool get valid => _valid;
   bool get changed => _changed;
   bool get deleting => _deleting;
+
+  set editing(bool value) {
+    setState(() {
+      __editing = value;
+    });
+    if (value)
+      editStateController.fling();
+    else
+      editStateController.fling(velocity: -1);
+  }
+
+  AnimationController editStateController;
+  Animation<double> fabSize;
 
   Exercise exercise;
 
@@ -45,7 +59,7 @@ class _ExercisePageState extends State<ExercisePage> {
   void initState() {
     exercise = widget.exercise;
     _deleting = false;
-    _editing = (widget.exercise == null);
+    __editing = (widget.exercise == null);
     fromTile = !(widget.exercise == null);
     if (exercise != null) {
       name.text = exercise.name;
@@ -75,6 +89,14 @@ class _ExercisePageState extends State<ExercisePage> {
         checkIfChanged();
         checkIfValid();
       });
+
+    editStateController = AnimationController(vsync: this);
+    fabSize = Tween<double>(begin: 56, end: 0).animate(
+      CurvedAnimation(
+        parent: editStateController,
+        curve: Curves.ease,
+      ),
+    );
 
     super.initState();
   }
@@ -175,17 +197,15 @@ class _ExercisePageState extends State<ExercisePage> {
           builder: (_) {
             return DiscardChangesDialog(context: context);
           }).then((discard) {
-        if (discard)
-          setState(() {
-            _editing = false;
-            discardChanges();
-          });
+        if (discard) editing = false;
+        setState(() {
+          discardChanges();
+        });
       });
       close = false;
     } else {
-      setState(() {
-        _editing = false;
-      });
+      editing = false;
+
       close = false;
     }
 
@@ -210,11 +230,6 @@ class _ExercisePageState extends State<ExercisePage> {
           textTheme: Theme.of(context).textTheme,
           actionsIconTheme: Theme.of(context).iconTheme,
           iconTheme: Theme.of(context).iconTheme,
-          // actions: [
-          //   IconButton(icon: Icon(Icons.edit), onPressed: () {}),
-          // ],
-          // flexibleSpace: Material(
-          //     color: Theme.of(context).colorScheme.surface, elevation: 4),
           leading: IconButton(
             icon: exercise == null || editing
                 ? Icon(Icons.close)
@@ -223,17 +238,24 @@ class _ExercisePageState extends State<ExercisePage> {
                 context, exercise != null ? exercise.name : null),
           ),
           actions: [
-            if (exercise != null && editing)
-              IconButton(
-                icon: Icon(Icons.delete),
-                onPressed: () {
-                  setState(() {
-                    _deleting = true;
-                  });
-                  Navigator.maybePop(
-                      context, exercise != null ? exercise.name : null);
-                },
-              )
+            IconButton(
+              icon: AnimatedBuilder(
+                animation: editStateController,
+                builder: (context, child) => Opacity(
+                  opacity: editStateController.value,
+                  child: Icon(
+                    Icons.delete,
+                  ),
+                ),
+              ),
+              onPressed: () {
+                setState(() {
+                  _deleting = true;
+                });
+                Navigator.maybePop(
+                    context, exercise != null ? exercise.name : null);
+              },
+            )
           ],
           bottom: PreferredSize(
             preferredSize: Size.fromHeight(96),
@@ -393,7 +415,7 @@ class _ExercisePageState extends State<ExercisePage> {
                     ? () {
                         FocusScope.of(context).unfocus();
                         setState(() {
-                          _editing = !editing;
+                          editing = !editing;
                           if (!editing) {
                             setState(() {
                               _changed = false;
@@ -428,35 +450,83 @@ class _ExercisePageState extends State<ExercisePage> {
                     : null,
                 mini: true,
               ),
-              AnimatedContainer(
-                margin: EdgeInsets.only(right: !editing ? 0 : 28),
-                height: editing ? 0 : 56,
-                width: editing ? 0 : 56,
-                duration: Duration(milliseconds: 150),
-                child: provider.Consumer<NowPlaying>(
-                  builder: (context, nowPlaying, child) => FloatingActionButton(
-                    heroTag: 'playButton',
-                    child: AnimatedOpacity(
-                      opacity: editing ? 0 : 1,
-                      duration: Duration(milliseconds: 150),
-                      child: exercise == null ||
-                              nowPlaying.empty ||
-                              nowPlaying.exercise.name != exercise.name ||
-                              !nowPlaying.playing
-                          ? Icon(Icons.play_arrow)
-                          : Icon(Icons.pause),
+
+              provider.Consumer<NowPlaying>(
+                builder: (context, nowPlaying, child) => AnimatedBuilder(
+                  animation: editStateController,
+                  builder: (context, child) => Padding(
+                    padding: EdgeInsets.all((56 - fabSize.value.abs()) / 2),
+                    child: Material(
+                      shape: CircleBorder(),
+                      elevation: 8,
+                      child: ClipOval(
+                        child: SizedOverflowBox(
+                          size: Size.square(fabSize.value.abs()),
+                          child: FloatingActionButton(
+                            heroTag: 'planBigFab',
+                            child: ClipOval(
+                              child: SizedOverflowBox(
+                                size: Size.square(
+                                  (fabSize.value.abs() - 32).clamp(
+                                    0.0,
+                                    24.0,
+                                  ),
+                                ),
+                                child: exercise == null ||
+                                        nowPlaying.empty ||
+                                        nowPlaying.exercise.name !=
+                                            exercise.name ||
+                                        !nowPlaying.playing
+                                    ? Icon(Icons.play_arrow)
+                                    : Icon(Icons.pause),
+                              ),
+                            ),
+                            onPressed: () {
+                              if (nowPlaying.empty ||
+                                  nowPlaying.exercise.name != exercise.name)
+                                nowPlaying.changePlan(
+                                    Plan.fromList('', [exercise.name])
+                                        .withParent(exercise.parent));
+                              else
+                                nowPlaying.togglePlay();
+                            },
+                          ),
+                        ),
+                      ),
                     ),
-                    onPressed: () {
-                      if (nowPlaying.empty ||
-                          nowPlaying.exercise.name != exercise.name)
-                        nowPlaying.changePlan(Plan.fromList('', [exercise.name])
-                            .withParent(exercise.parent));
-                      else
-                        nowPlaying.togglePlay();
-                    },
                   ),
                 ),
               ),
+
+              // AnimatedContainer(
+              //   margin: EdgeInsets.only(right: !editing ? 0 : 28),
+              //   height: editing ? 0 : 56,
+              //   width: editing ? 0 : 56,
+              //   duration: Duration(milliseconds: 150),
+              //   child: provider.Consumer<NowPlaying>(
+              //     builder: (context, nowPlaying, child) => FloatingActionButton(
+              //       heroTag: 'playButton',
+              //       child: AnimatedOpacity(
+              //         opacity: editing ? 0 : 1,
+              //         duration: Duration(milliseconds: 150),
+              //         child: exercise == null ||
+              //                 nowPlaying.empty ||
+              //                 nowPlaying.exercise.name != exercise.name ||
+              //                 !nowPlaying.playing
+              //             ? Icon(Icons.play_arrow)
+              //             : Icon(Icons.pause),
+              //       ),
+              //       onPressed: () {
+              //         if (nowPlaying.empty ||
+              //             nowPlaying.exercise.name != exercise.name)
+              //           nowPlaying.changePlan(Plan.fromList('', [exercise.name])
+              //               .withParent(exercise.parent));
+              //         else
+              //           nowPlaying.togglePlay();
+              //       },
+              //     ),
+              //   ),
+              // ),
             ],
           ),
         ),

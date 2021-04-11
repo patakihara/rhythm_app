@@ -28,6 +28,19 @@ class _PlanPageState extends State<PlanPage> with TickerProviderStateMixin {
   bool get changed => _changed;
   bool get deleting => _deleting;
 
+  set editing(bool value) {
+    setState(() {
+      _editing = value;
+    });
+    if (value)
+      editStateController.fling();
+    else
+      editStateController.fling(velocity: -1);
+  }
+
+  AnimationController editStateController;
+  Animation<double> fabSize;
+
   Plan plan;
 
   AnimationController appBarHeightController;
@@ -131,6 +144,7 @@ class _PlanPageState extends State<PlanPage> with TickerProviderStateMixin {
       exerciseNames = <String>[];
       fromCard = false;
     }
+
     appBarHeightController = AnimationController(vsync: this, value: 0.0);
     appBarHeightController.addListener(() => animateExtent());
     scrollController.addListener(() {
@@ -141,6 +155,15 @@ class _PlanPageState extends State<PlanPage> with TickerProviderStateMixin {
           atTopOfList = true;
       });
     });
+
+    editStateController = AnimationController(vsync: this);
+    fabSize = Tween<double>(begin: 56, end: 0).animate(
+      CurvedAnimation(
+        parent: editStateController,
+        curve: Curves.ease,
+      ),
+    );
+
     super.initState();
     if (widget.plan == null) appBarHeightController.fling();
   }
@@ -420,17 +443,15 @@ class _PlanPageState extends State<PlanPage> with TickerProviderStateMixin {
           builder: (_) {
             return DiscardChangesDialog(context: context);
           }).then((discard) {
-        if (discard)
-          setState(() {
-            _editing = false;
-            discardChanges();
-          });
+        if (discard) editing = false;
+        setState(() {
+          discardChanges();
+        });
       });
       close = false;
     } else {
-      setState(() {
-        _editing = false;
-      });
+      editing = false;
+
       close = false;
     }
 
@@ -658,9 +679,7 @@ class _PlanPageState extends State<PlanPage> with TickerProviderStateMixin {
                       onPressed: (changed && valid) || !editing
                           ? () {
                               FocusScope.of(context).unfocus();
-                              setState(() {
-                                _editing = !editing;
-                              });
+                              editing = !editing;
                               if (!editing) {
                                 setState(() {
                                   _changed = false;
@@ -691,32 +710,48 @@ class _PlanPageState extends State<PlanPage> with TickerProviderStateMixin {
                           : null,
                       mini: true,
                     ),
-                    AnimatedContainer(
-                      margin: EdgeInsets.only(right: !editing ? 0 : 28),
-                      height: editing ? 0 : 56,
-                      width: editing ? 0 : 56,
-                      duration: Duration(milliseconds: 150),
-                      child: provider.Consumer<NowPlaying>(
-                        builder: (context, nowPlaying, child) =>
-                            FloatingActionButton(
-                          heroTag: 'playButton',
-                          child: AnimatedOpacity(
-                            opacity: editing ? 0 : 1,
-                            duration: Duration(milliseconds: 150),
-                            child: plan == null ||
-                                    nowPlaying.empty ||
-                                    nowPlaying.plan.name != plan.name ||
-                                    !nowPlaying.playing
-                                ? Icon(Icons.play_arrow)
-                                : Icon(Icons.pause),
+                    provider.Consumer<NowPlaying>(
+                      builder: (context, nowPlaying, child) => AnimatedBuilder(
+                        animation: editStateController,
+                        builder: (context, child) => Padding(
+                          padding:
+                              EdgeInsets.all((56 - fabSize.value.abs()) / 2),
+                          child: Material(
+                            shape: CircleBorder(),
+                            elevation: 8,
+                            child: ClipOval(
+                              child: SizedOverflowBox(
+                                size: Size.square(fabSize.value.abs()),
+                                child: FloatingActionButton(
+                                  heroTag: 'planBigFab',
+                                  child: ClipOval(
+                                    child: SizedOverflowBox(
+                                      size: Size.square(
+                                        (fabSize.value.abs() - 32).clamp(
+                                          0.0,
+                                          24.0,
+                                        ),
+                                      ),
+                                      child: plan == null ||
+                                              nowPlaying.empty ||
+                                              nowPlaying.plan.name !=
+                                                  plan.name ||
+                                              !nowPlaying.playing
+                                          ? Icon(Icons.play_arrow)
+                                          : Icon(Icons.pause),
+                                    ),
+                                  ),
+                                  onPressed: () {
+                                    if (nowPlaying.empty ||
+                                        nowPlaying.plan.name != plan.name)
+                                      nowPlaying.changePlan(plan);
+                                    else
+                                      nowPlaying.togglePlay();
+                                  },
+                                ),
+                              ),
+                            ),
                           ),
-                          onPressed: () {
-                            if (nowPlaying.empty ||
-                                nowPlaying.plan.name != plan.name)
-                              nowPlaying.changePlan(plan);
-                            else
-                              nowPlaying.togglePlay();
-                          },
                         ),
                       ),
                     ),
@@ -766,16 +801,23 @@ class _PlanPageState extends State<PlanPage> with TickerProviderStateMixin {
           automaticallyImplyLeading: false,
           leading: null,
           actions: [
-            if (plan != null && editing)
-              IconButton(
-                icon: Icon(Icons.delete),
-                onPressed: () {
-                  setState(() {
-                    _deleting = true;
-                  });
-                  Navigator.maybePop(context, plan != null ? plan.name : null);
-                },
-              )
+            IconButton(
+              icon: AnimatedBuilder(
+                animation: editStateController,
+                builder: (context, child) => Opacity(
+                  opacity: editStateController.value,
+                  child: Icon(
+                    Icons.delete,
+                  ),
+                ),
+              ),
+              onPressed: () {
+                setState(() {
+                  _deleting = true;
+                });
+                Navigator.maybePop(context, plan != null ? plan.name : null);
+              },
+            )
           ],
           bottom: PreferredSize(
             preferredSize: Size.fromHeight(initialHeight - extent + 40),

@@ -352,12 +352,26 @@ class _TimersMenuState extends State<TimersMenu> with TickerProviderStateMixin {
       // }
     });
 
-    fabSize = Tween<double>(begin: -56, end: 56).animate(
-      CurvedAnimation(
-        parent: tabController.animation,
-        curve: Curves.easeInOut,
-      ),
-    );
+    fabSize = TweenSequence(
+      <TweenSequenceItem<double>>[
+        TweenSequenceItem<double>(
+          tween: Tween<double>(begin: 56, end: 0).chain(
+            CurveTween(curve: Curves.ease),
+          ),
+          weight: 40.0,
+        ),
+        TweenSequenceItem<double>(
+          tween: ConstantTween<double>(0),
+          weight: 20.0,
+        ),
+        TweenSequenceItem<double>(
+          tween: Tween<double>(begin: 0, end: 56).chain(
+            CurveTween(curve: Curves.ease),
+          ),
+          weight: 40.0,
+        ),
+      ],
+    ).animate(tabController.animation);
 
     fabOpacity = Tween<double>(begin: -1, end: 1).animate(
       CurvedAnimation(
@@ -641,42 +655,38 @@ class _TimersMenuState extends State<TimersMenu> with TickerProviderStateMixin {
         ],
       ),
       floatingActionButton: provider.Consumer<MenuProvider>(
-        builder: (context, menuProvider, child) => SizedBox(
-          // width: 56,
-          // height: 56,
-          child: AnimatedBuilder(
-            animation: tabController.animation,
-            builder: (context, child) => Padding(
-              padding: EdgeInsets.all((56 - fabSize.value.abs()) / 2),
-              child: Material(
-                shape: CircleBorder(),
-                elevation: 8,
-                child: ClipOval(
-                  child: SizedOverflowBox(
-                    size: Size.square(fabSize.value.abs()),
-                    child: FloatingActionButton(
-                      heroTag: menuProvider.tabMenu,
-                      child: ClipOval(
-                        child: SizedOverflowBox(
-                          size: Size.square(
-                            (fabSize.value.abs() - 32).clamp(
-                              0.0,
-                              24.0,
-                            ),
-                          ),
-                          child: Icon(
-                            Icons.add,
+        builder: (context, menuProvider, child) => AnimatedBuilder(
+          animation: tabController.animation,
+          builder: (context, child) => Padding(
+            padding: EdgeInsets.all((56 - fabSize.value.abs()) / 2),
+            child: Material(
+              shape: CircleBorder(),
+              elevation: 8,
+              child: ClipOval(
+                child: SizedOverflowBox(
+                  size: Size.square(fabSize.value.abs()),
+                  child: FloatingActionButton(
+                    heroTag: menuProvider.tabMenu,
+                    child: ClipOval(
+                      child: SizedOverflowBox(
+                        size: Size.square(
+                          (fabSize.value.abs() - 32).clamp(
+                            0.0,
+                            24.0,
                           ),
                         ),
+                        child: Icon(
+                          Icons.add,
+                        ),
                       ),
-                      onPressed: () {
-                        if (menuProvider.tabMenu == TabMenu.plans) {
-                          menuProvider.inPlanPage = true;
-                        } else {
-                          menuProvider.inExercisePage = true;
-                        }
-                      },
                     ),
+                    onPressed: () {
+                      if (menuProvider.tabMenu == TabMenu.plans) {
+                        menuProvider.inPlanPage = true;
+                      } else {
+                        menuProvider.inExercisePage = true;
+                      }
+                    },
                   ),
                 ),
               ),
