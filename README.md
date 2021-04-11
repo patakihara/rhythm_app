@@ -1,4 +1,4 @@
-# rhythm
+# Rhythm
 
 Gym timer and metronome.
 
