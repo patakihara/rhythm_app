@@ -68,6 +68,38 @@ class _HomePageState extends State<HomePage> {
     return provider.Consumer<MenuProvider>(
       builder: (context, menuProvider, child) => Scaffold(
         key: scaffoldKey,
+        drawer: Drawer(
+          child: ListView(
+            children: [
+              DrawerHeader(
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                  child: Text('Rhythm')),
+              ListTile(
+                title: Text('Settings'),
+                leading: Icon(Icons.settings),
+                onTap: () {},
+              ),
+              ListTile(
+                title: Text('Change theme'),
+                leading: Icon(
+                  Theme.of(context).brightness == Brightness.dark
+                      ? Icons.brightness_7
+                      : Icons.brightness_4,
+                ),
+                onTap: () {
+                  context.read<MenuProvider>().flipTheme();
+                },
+              ),
+              AboutListTile(
+                icon: Icon(Icons.info),
+                applicationName: 'Rhythm',
+                aboutBoxChildren: [Text('Gym timer and metronome.')],
+              ),
+            ],
+          ),
+        ),
         body: PlayMenu(
           child: Container(
             child: PageTransitionSwitcher(
@@ -85,30 +117,7 @@ class _HomePageState extends State<HomePage> {
                       key: ValueKey('homePage'),
                       child: Scaffold(
                         key: ValueKey('scaffoldHomePage'), //scaffoldKey,
-                        drawer: Drawer(
-                          child: ListView(
-                            children: [
-                              DrawerHeader(
                                   decoration: BoxDecoration(
-                                    color:
-                                        Theme.of(context).colorScheme.primary,
-                                  ),
-                                  child: Text('Rhythm')),
-                              ListTile(
-                                title: Text('Settings'),
-                                leading: Icon(Icons.settings),
-                                onTap: () {},
-                              ),
-                              AboutListTile(
-                                icon: Icon(Icons.info),
-                                applicationName: 'Rhythm',
-                                aboutBoxChildren: [
-                                  Text('Gym timer and metronome.')
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
                         appBar: PreferredSize(
                           preferredSize: Size.fromHeight(56),
                           child: Material(
@@ -150,60 +159,60 @@ class _HomePageState extends State<HomePage> {
                                             .onSurface)
                                     .copyWith(letterSpacing: -1.0),
                               ),
-                              actions: [
-                                Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 0),
-                                    child: PopupMenuButton<AppBarMenuOptions>(
-                                      icon: Icon(
-                                        Icons.more_vert,
-                                        size: 24,
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onSurface
-                                            .withOpacity(.87),
-                                      ),
-                                      onSelected: (AppBarMenuOptions result) {
-                                        if (result ==
-                                            AppBarMenuOptions.changeTheme) {
-                                          context
-                                              .read<MenuProvider>()
-                                              .flipTheme();
-                                        }
-                                      },
-                                      itemBuilder: (BuildContext context) =>
-                                          <PopupMenuEntry<AppBarMenuOptions>>[
-                                        PopupMenuItem<AppBarMenuOptions>(
-                                          value: AppBarMenuOptions.changeTheme,
-                                          child: ListTile(
-                                            dense: true,
-                                            // visualDensity:
-                                            //     VisualDensity(horizontal: -4, vertical: -4),
-                                            minLeadingWidth: 18,
-                                            contentPadding:
-                                                EdgeInsets.symmetric(
-                                                    horizontal: 0),
-                                            horizontalTitleGap: 8,
-                                            leading: Icon(
-                                              Theme.of(context).brightness ==
-                                                      Brightness.dark
-                                                  ? Icons.brightness_7
-                                                  : Icons.brightness_4,
-                                              color: Theme.of(context)
-                                                  .colorScheme
-                                                  .onSurface
-                                                  .withOpacity(.87),
-                                            ),
-                                            title: Text(
-                                              'Change theme',
+                              // actions: [
+                              //   Padding(
+                              //       padding: const EdgeInsets.symmetric(
+                              //           horizontal: 0),
+                              //       child: PopupMenuButton<AppBarMenuOptions>(
+                              //         icon: Icon(
+                              //           Icons.more_vert,
+                              //           size: 24,
+                              //           color: Theme.of(context)
+                              //               .colorScheme
+                              //               .onSurface
+                              //               .withOpacity(.87),
+                              //         ),
+                              //         onSelected: (AppBarMenuOptions result) {
+                              //           if (result ==
+                              //               AppBarMenuOptions.changeTheme) {
+                              //             context
+                              //                 .read<MenuProvider>()
+                              //                 .flipTheme();
+                              //           }
+                              //         },
+                              //         itemBuilder: (BuildContext context) =>
+                              //             <PopupMenuEntry<AppBarMenuOptions>>[
+                              //           PopupMenuItem<AppBarMenuOptions>(
+                              //             value: AppBarMenuOptions.changeTheme,
+                              //             child: ListTile(
+                              //               dense: true,
+                              //               // visualDensity:
+                              //               //     VisualDensity(horizontal: -4, vertical: -4),
+                              //               minLeadingWidth: 18,
+                              //               contentPadding:
+                              //                   EdgeInsets.symmetric(
+                              //                       horizontal: 0),
+                              //               horizontalTitleGap: 8,
+                              //               leading: Icon(
+                              //                 Theme.of(context).brightness ==
+                              //                         Brightness.dark
+                              //                     ? Icons.brightness_7
+                              //                     : Icons.brightness_4,
+                              //                 color: Theme.of(context)
+                              //                     .colorScheme
+                              //                     .onSurface
+                              //                     .withOpacity(.87),
+                              //               ),
+                              //               title: Text(
+                              //                 'Change theme',
 
-                                              // style: Theme.of(context).textTheme.bodyText2,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ))
-                              ],
+                              //                 // style: Theme.of(context).textTheme.bodyText2,
+                              //               ),
+                              //             ),
+                              //           ),
+                              //         ],
+                              //       ))
+                              // ],
                               iconTheme: Theme.of(context).iconTheme.copyWith(
                                   color: Theme.of(context)
                                       .textTheme
