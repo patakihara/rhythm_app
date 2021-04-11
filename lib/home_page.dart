@@ -1,3 +1,4 @@
+import 'package:audio_session/audio_session.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:rubber/rubber.dart';
@@ -81,6 +82,12 @@ class _HomePageState extends State<HomePage> {
                 leading: Icon(Icons.settings),
                 onTap: () {},
               ),
+              AboutListTile(
+                icon: Icon(Icons.info),
+                applicationName: 'Rhythm',
+                aboutBoxChildren: [Text('Gym timer and metronome.')],
+              ),
+              Divider(),
               ListTile(
                 title: Text('Change theme'),
                 leading: Icon(
@@ -91,11 +98,6 @@ class _HomePageState extends State<HomePage> {
                 onTap: () {
                   context.read<MenuProvider>().flipTheme();
                 },
-              ),
-              AboutListTile(
-                icon: Icon(Icons.info),
-                applicationName: 'Rhythm',
-                aboutBoxChildren: [Text('Gym timer and metronome.')],
               ),
             ],
           ),
@@ -136,14 +138,12 @@ class _HomePageState extends State<HomePage> {
                                 ? 4
                                 : 0,
                             child: AppBar(
-                              // brightness: Brightness.light,
-                              // textTheme: Theme.of(context).textTheme.apply(
-                              // displayColor: Theme.of(context).colorScheme.onSurface),
-                              // leading: IconButton(
-                              //     icon: Icon(MdiIcons.menu),
-                              //     onPressed: () {
-                              //       scaffoldKey.currentState.openDrawer();
-                              //     }),
+                              leading: IconButton(
+                                icon: Icon(Icons.menu),
+                                onPressed: () {
+                                  scaffoldKey.currentState.openDrawer();
+                                },
+                              ),
                               primary: true,
                               centerTitle: false,
                               title: Text(
@@ -158,60 +158,6 @@ class _HomePageState extends State<HomePage> {
                                             .onSurface)
                                     .copyWith(letterSpacing: -1.0),
                               ),
-                              // actions: [
-                              //   Padding(
-                              //       padding: const EdgeInsets.symmetric(
-                              //           horizontal: 0),
-                              //       child: PopupMenuButton<AppBarMenuOptions>(
-                              //         icon: Icon(
-                              //           Icons.more_vert,
-                              //           size: 24,
-                              //           color: Theme.of(context)
-                              //               .colorScheme
-                              //               .onSurface
-                              //               .withOpacity(.87),
-                              //         ),
-                              //         onSelected: (AppBarMenuOptions result) {
-                              //           if (result ==
-                              //               AppBarMenuOptions.changeTheme) {
-                              //             context
-                              //                 .read<MenuProvider>()
-                              //                 .flipTheme();
-                              //           }
-                              //         },
-                              //         itemBuilder: (BuildContext context) =>
-                              //             <PopupMenuEntry<AppBarMenuOptions>>[
-                              //           PopupMenuItem<AppBarMenuOptions>(
-                              //             value: AppBarMenuOptions.changeTheme,
-                              //             child: ListTile(
-                              //               dense: true,
-                              //               // visualDensity:
-                              //               //     VisualDensity(horizontal: -4, vertical: -4),
-                              //               minLeadingWidth: 18,
-                              //               contentPadding:
-                              //                   EdgeInsets.symmetric(
-                              //                       horizontal: 0),
-                              //               horizontalTitleGap: 8,
-                              //               leading: Icon(
-                              //                 Theme.of(context).brightness ==
-                              //                         Brightness.dark
-                              //                     ? Icons.brightness_7
-                              //                     : Icons.brightness_4,
-                              //                 color: Theme.of(context)
-                              //                     .colorScheme
-                              //                     .onSurface
-                              //                     .withOpacity(.87),
-                              //               ),
-                              //               title: Text(
-                              //                 'Change theme',
-
-                              //                 // style: Theme.of(context).textTheme.bodyText2,
-                              //               ),
-                              //             ),
-                              //           ),
-                              //         ],
-                              //       ))
-                              // ],
                               iconTheme: Theme.of(context).iconTheme.copyWith(
                                   color: Theme.of(context)
                                       .textTheme
@@ -368,10 +314,22 @@ class _TimersMenuState extends State<TimersMenu> with TickerProviderStateMixin {
     tabController = TabController(length: 2, vsync: this);
     tabController.index = (menuProvider.tabMenu == TabMenu.plans) ? 0 : 1;
     tabController.addListener(() {
-      if (tabController.index == 0)
+      if (tabController.index == 0) {
         menuProvider.tabMenu = TabMenu.plans;
-      else
+      } else {
         menuProvider.tabMenu = TabMenu.exercises;
+      }
+      if (tabController.previousIndex != tabController.index ||
+          tabController.indexIsChanging) {
+        menuProvider.appBarElevated = false;
+      }
+      // if (tabController.indexIsChanging)
+      //
+
+      // print('offset is: ' + tabController.offset.toString());
+      // if (tabController.offset.abs() < 0.5) {
+      //   menuProvider.appBarElevated = false;
+      // }
     });
     super.initState();
   }
@@ -437,12 +395,6 @@ class _TimersMenuState extends State<TimersMenu> with TickerProviderStateMixin {
                     indicatorSize: TabBarIndicatorSize.label,
                     labelPadding: EdgeInsets.only(bottom: 8),
                     indicatorPadding: EdgeInsets.only(bottom: 12, top: 12),
-                    // indicator: BoxDecoration(
-                    //     border: Border(
-                    //         bottom: BorderSide(
-                    //   color: Theme.of(context).colorScheme.onBackground,
-                    //   width: 2.0,
-                    // ))),
                     labelStyle: Theme.of(context).textTheme.button.copyWith(
                         fontFamily:
                             Theme.of(context).textTheme.caption.fontFamily),
