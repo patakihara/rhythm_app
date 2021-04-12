@@ -606,9 +606,9 @@ class _PlayCardState extends State<PlayCard> with TickerProviderStateMixin {
       BuildContext context, double percent, bool animate) {
     return LinearPercentIndicator(
       curve: Curves.fastOutSlowIn,
-      animation: animate,
+      animation: false,
       animationDuration: 300,
-      animateFromLastPercent: true,
+      animateFromLastPercent: false,
       percent: percent,
       lineHeight: 1.5,
       progressColor: Theme.of(context).accentColor,
@@ -978,6 +978,8 @@ class _ExpandableSheetState extends State<ExpandableSheet> {
   bool fromStart = true;
   bool triedToDismiss = false;
 
+  Animation<double> height;
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -1009,12 +1011,21 @@ class _ExpandableSheetState extends State<ExpandableSheet> {
         });
       }
     });
+
+    actualConstraints = BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height,
+        maxWidth: MediaQuery.of(context).size.width);
   }
 
   BoxConstraints actualConstraints;
 
   @override
   Widget build(BuildContext context) {
+    height = Tween<double>(
+      begin: widget.initialHeight,
+      end: actualConstraints.maxHeight,
+    ).animate(widget.controller);
+
     return WillPopScope(
       onWillPop: () async {
         if (widget.controller.isDismissed)
@@ -1025,149 +1036,221 @@ class _ExpandableSheetState extends State<ExpandableSheet> {
         }
       },
       child: SizedBox.expand(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            if (actualConstraints == null) actualConstraints = constraints;
-
-            Animation<double> height = Tween<double>(
-              begin: widget.initialHeight,
-              end: actualConstraints.maxHeight,
-            ).animate(widget.controller);
-
-            return Stack(
-              alignment: AlignmentDirectional.bottomCenter,
-              children: [
-                Positioned(
-                  top: 0,
-                  child: AnimatedBuilder(
-                    animation: widget.showController,
-                    builder: (context, child) => SizedBox(
-                      height:
-                          actualConstraints.maxHeight - widget.showHeight.value,
-                      width: actualConstraints.maxWidth,
-                      child: widget.child,
-                    ),
+        child: Stack(
+          alignment: AlignmentDirectional.bottomCenter,
+          children: [
+            Positioned(
+              top: 0,
+              child: AnimatedBuilder(
+                animation: widget.showController,
+                builder: (context, child) => SizedBox(
+                  height: actualConstraints.maxHeight - widget.showHeight.value,
+                  width: actualConstraints.maxWidth,
+                  child: widget.child,
+                ),
+              ),
+            ),
+            IgnorePointer(
+              ignoring: widget.controller.isDismissed,
+              child: SizedBox.expand(
+                child: FadeTransition(
+                  opacity: widget.opacity,
+                  child: Container(
+                    color: Colors.black,
                   ),
                 ),
-                IgnorePointer(
-                  ignoring: widget.controller.isDismissed,
-                  child: SizedBox.expand(
-                    child: FadeTransition(
-                      opacity: widget.opacity,
-                      child: Container(
-                        color: Colors.black,
-                      ),
-                    ),
-                  ),
-                ),
-                AnimatedBuilder(
-                  animation: widget.controller,
+              ),
+            ),
+            AnimatedBuilder(
+              animation: widget.controller,
+              builder: (context, child) {
+                return AnimatedBuilder(
+                  animation: widget.showController,
                   builder: (context, child) {
-                    return AnimatedBuilder(
-                      animation: widget.showController,
-                      builder: (context, child) {
-                        Animation<double> top1 = Tween<double>(
-                                begin: actualConstraints.maxHeight,
-                                end: actualConstraints.maxHeight -
-                                    widget.initialHeight)
-                            .animate(widget.showController);
+                    Animation<double> top1 = Tween<double>(
+                            begin: actualConstraints.maxHeight,
+                            end: actualConstraints.maxHeight -
+                                widget.initialHeight)
+                        .animate(widget.showController);
 
-                        Animation<double> top2 = Tween<double>(
-                                begin: actualConstraints.maxHeight -
-                                    widget.initialHeight,
-                                end: 0)
-                            .animate(widget.controller);
+                    Animation<double> top2 = Tween<double>(
+                            begin: actualConstraints.maxHeight -
+                                widget.initialHeight,
+                            end: 0)
+                        .animate(widget.controller);
 
-                        return Positioned(
-                          top: !widget.showController.isCompleted
-                              ? top1.value
-                              : top2.value,
-                          child: child,
-                        );
-                      },
-                      child: GestureDetector(
-                        behavior: HitTestBehavior.translucent,
-                        onTap: () {
-                          if (widget.controller.isDismissed)
-                            widget.controller.fling();
-                        },
-                        onVerticalDragUpdate: (details) {
-                          final newValue = widget.controller.value -
-                              details.primaryDelta /
-                                  actualConstraints.maxHeight;
-                          if (!triedToDismiss &&
-                              newValue >= 0 &&
-                              newValue <= 1) {
-                            widget.controller.value = newValue;
-                          } else if (newValue < 0 &&
-                              widget.controller.isDismissed) {
-                            final newShowValue = widget.showController.value -
-                                details.primaryDelta / widget.initialHeight;
-                            if (newShowValue >= 0 && newShowValue <= 1) {
-                              widget.showController.value = newShowValue;
-                              setState(() {
-                                triedToDismiss = true;
-                              });
-                            }
-                          }
-                        },
-                        onVerticalDragEnd: (details) {
-                          if (triedToDismiss) {
-                            setState(() {
-                              triedToDismiss = false;
-                            });
-                            if (widget.showController.value < 0.85) {
-                              widget.showController
-                                  .fling(velocity: -1)
-                                  .then((_) {
-                                if (widget.onDismiss != null)
-                                  widget.onDismiss();
-                              });
-                            } else {
-                              widget.showController.fling();
-                            }
-                          }
-
-                          final threshold = 2.0;
-                          final velocity =
-                              -details.velocity.pixelsPerSecond.dy /
-                                  actualConstraints.maxHeight;
-
-                          final velocityCheck = velocity.abs() >= threshold;
-                          final positionCheck =
-                              (fromStart && widget.controller.value > 0.5) ||
-                                  (!fromStart && widget.controller.value < 0.5);
-
-                          print('Velocity is high enough: ' +
-                              velocityCheck.toString());
-                          print('Position is high enough: ' +
-                              positionCheck.toString());
-                          print('Coming from start: ' + fromStart.toString());
-
-                          if (velocityCheck)
-                            widget.controller.fling(velocity: velocity);
-                          else if (positionCheck)
-                            widget.controller
-                                .fling(velocity: fromStart ? 1 : -1);
-                          else
-                            widget.controller
-                                .fling(velocity: fromStart ? -1 : 1);
-                        },
-                        child: SizedBox(
-                          height: height.value,
-                          width: actualConstraints.maxWidth,
-                          child: child,
-                        ),
-                      ),
+                    return Positioned(
+                      top: !widget.showController.isCompleted
+                          ? top1.value
+                          : top2.value,
+                      child: child,
                     );
                   },
-                  child: widget.sheet,
-                ),
-              ],
-            );
-          },
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.translucent,
+                    onTap: () {
+                      if (widget.controller.isDismissed)
+                        widget.controller.fling();
+                    },
+                    onVerticalDragUpdate: (details) {
+                      final newValue = widget.controller.value -
+                          details.primaryDelta / actualConstraints.maxHeight;
+                      if (!triedToDismiss && newValue >= 0 && newValue <= 1) {
+                        widget.controller.value = newValue;
+                      } else if (newValue < 0 &&
+                          widget.controller.isDismissed) {
+                        final newShowValue = widget.showController.value -
+                            details.primaryDelta / widget.initialHeight;
+                        if (newShowValue >= 0 && newShowValue <= 1) {
+                          widget.showController.value = newShowValue;
+                          setState(() {
+                            triedToDismiss = true;
+                          });
+                        }
+                      }
+                    },
+                    onVerticalDragEnd: (details) {
+                      if (triedToDismiss) {
+                        setState(() {
+                          triedToDismiss = false;
+                        });
+                        if (widget.showController.value < 0.85) {
+                          widget.showController.fling(velocity: -1).then((_) {
+                            if (widget.onDismiss != null) widget.onDismiss();
+                          });
+                        } else {
+                          widget.showController.fling();
+                        }
+                      }
+
+                      final threshold = 2.0;
+                      final velocity = -details.velocity.pixelsPerSecond.dy /
+                          actualConstraints.maxHeight;
+
+                      final velocityCheck = velocity.abs() >= threshold;
+                      final positionCheck =
+                          (fromStart && widget.controller.value > 0.5) ||
+                              (!fromStart && widget.controller.value < 0.5);
+
+                      print('Velocity is high enough: ' +
+                          velocityCheck.toString());
+                      print('Position is high enough: ' +
+                          positionCheck.toString());
+                      print('Coming from start: ' + fromStart.toString());
+
+                      if (velocityCheck)
+                        widget.controller.fling(velocity: velocity);
+                      else if (positionCheck)
+                        widget.controller.fling(velocity: fromStart ? 1 : -1);
+                      else
+                        widget.controller.fling(velocity: fromStart ? -1 : 1);
+                    },
+                    child: SizedBox(
+                      height: height.value,
+                      width: actualConstraints.maxWidth,
+                      child: child,
+                    ),
+                  ),
+                );
+              },
+              child: widget.sheet,
+            ),
+          ],
         ),
       ),
+    );
+  }
+}
+
+class ExpandableBox extends StatefulWidget {
+  ExpandableBox({
+    Key key,
+    this.child,
+    this.maxHeight,
+    this.minHeight,
+    @required this.controller,
+    Animation<double> height,
+  })  : this.height = height ??
+            Tween<double>(begin: minHeight, end: maxHeight).animate(controller),
+        super(key: key) {
+    assert((minHeight != null && maxHeight != null) || height != null);
+  }
+
+  final Widget child;
+  final double maxHeight;
+  final double minHeight;
+  final AnimationController controller;
+  final Animation<double> height;
+
+  @override
+  _ExpandableBoxState createState() => _ExpandableBoxState();
+}
+
+class _ExpandableBoxState extends State<ExpandableBox> {
+  bool fromStart;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.controller.addStatusListener((status) {
+      if (widget.controller.isCompleted)
+        setState(() {
+          fromStart = false;
+        });
+      else if (widget.controller.isDismissed) {
+        setState(() {
+          fromStart = true;
+        });
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: widget.controller,
+      builder: (context, child) => GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onTap: () {
+          if (widget.controller.isDismissed)
+            widget.controller.fling(velocity: 2);
+        },
+        onVerticalDragUpdate: (details) {
+          final newValue = widget.controller.value -
+              details.primaryDelta / MediaQuery.of(context).size.height;
+          if (newValue >= 0 && newValue <= 1) {
+            widget.controller.value = newValue;
+          }
+        },
+        onVerticalDragEnd: (details) {
+          final threshold = 1.0;
+          final velocity = -details.velocity.pixelsPerSecond.dy /
+              MediaQuery.of(context).size.height;
+
+          final velocityCheck = velocity.abs() >= threshold;
+          final positionCheck = (fromStart && widget.controller.value > 0.5) ||
+              (!fromStart && widget.controller.value < 0.8);
+
+          print('Velocity is high enough: ' + velocityCheck.toString());
+          print('Position is high enough: ' + positionCheck.toString());
+          print('Coming from start: ' + fromStart.toString());
+
+          if (velocityCheck)
+            widget.controller.fling(velocity: velocity);
+          else if (positionCheck)
+            widget.controller.fling(velocity: fromStart ? 2 : -2);
+          else
+            widget.controller.fling(velocity: fromStart ? -2 : 2);
+        },
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: widget.height.value,
+            minHeight: widget.minHeight ?? 56,
+          ),
+          child: child,
+        ),
+      ),
+      child: widget.child,
     );
   }
 }
