@@ -888,8 +888,8 @@ class Metronome extends Beeper {
   List<int> _finishIndices = [];
 
   Metronome(
-    this.tocDuration,
     this.ticDuration,
+    this.tocDuration,
     this.totalCycles, {
     void Function() onTic,
     void Function() onToc,

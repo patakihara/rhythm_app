@@ -52,8 +52,8 @@ class _ExercisePageState extends State<ExercisePage>
   TextEditingController reps = TextEditingController();
   TextEditingController secsStart = TextEditingController();
   TextEditingController secsRest = TextEditingController();
-  TextEditingController secsUp = TextEditingController();
-  TextEditingController secsDown = TextEditingController();
+  TextEditingController secsTic = TextEditingController();
+  TextEditingController secsToc = TextEditingController();
 
   final _scaffoldKey = GlobalKey<ScaffoldState>();
 
@@ -69,8 +69,8 @@ class _ExercisePageState extends State<ExercisePage>
       reps.text = exercise.reps.toString();
       secsStart.text = exercise.secsStart.toString();
       secsRest.text = exercise.secsRest.toString();
-      secsUp.text = exercise.ticTime.toString();
-      secsDown.text = exercise.tocTime.toString();
+      secsTic.text = exercise.ticTime.toString();
+      secsToc.text = exercise.tocTime.toString();
       _changed = false;
       _valid = true;
     } else {
@@ -78,13 +78,13 @@ class _ExercisePageState extends State<ExercisePage>
       reps.text = '10';
       secsStart.text = '15';
       secsRest.text = '30';
-      secsUp.text = '1.0';
-      secsDown.text = '1.0';
+      secsTic.text = '1.0';
+      secsToc.text = '1.0';
       _changed = false;
       _valid = false;
     }
 
-    var controllers = [name, sets, reps, secsStart, secsRest, secsUp, secsDown];
+    var controllers = [name, sets, reps, secsStart, secsRest, secsTic, secsToc];
 
     for (var i = 0; i < controllers.length; i++)
       controllers[i].addListener(() {
@@ -113,8 +113,8 @@ class _ExercisePageState extends State<ExercisePage>
             reps.text == exercise.reps.toString() &&
             secsStart.text == exercise.secsStart.toString() &&
             secsRest.text == exercise.secsRest.toString() &&
-            secsUp.text == exercise.ticTime.toString() &&
-            secsDown.text == exercise.tocTime.toString());
+            secsTic.text == exercise.ticTime.toString() &&
+            secsToc.text == exercise.tocTime.toString());
       } else
         _changed = true;
     });
@@ -127,8 +127,8 @@ class _ExercisePageState extends State<ExercisePage>
           validate(reps, intValidator) &&
           validate(secsStart, numValidator) &&
           validate(secsRest, numValidator) &&
-          validate(secsUp, numValidator) &&
-          validate(secsDown, numValidator);
+          validate(secsTic, numValidator) &&
+          validate(secsToc, numValidator);
     });
   }
 
@@ -140,8 +140,8 @@ class _ExercisePageState extends State<ExercisePage>
         reps.text = exercise.reps.toString();
         secsStart.text = exercise.secsStart.toString();
         secsRest.text = exercise.secsRest.toString();
-        secsUp.text = exercise.ticTime.toString();
-        secsDown.text = exercise.tocTime.toString();
+        secsTic.text = exercise.ticTime.toString();
+        secsToc.text = exercise.tocTime.toString();
       });
       FocusScope.of(context).unfocus();
     }
@@ -390,8 +390,8 @@ class _ExercisePageState extends State<ExercisePage>
                   Expanded(
                     child: AnimatedTextField(
                         editing: editing,
-                        controller: secsUp,
-                        labelText: 'Up time',
+                        controller: secsTic,
+                        labelText: 'Tic time',
                         suffixText: 'secs',
                         keyboardType: TextInputType.number,
                         validator: numValidator),
@@ -400,8 +400,8 @@ class _ExercisePageState extends State<ExercisePage>
                   Expanded(
                     child: AnimatedTextField(
                         editing: editing,
-                        controller: secsDown,
-                        labelText: 'Down time',
+                        controller: secsToc,
+                        labelText: 'Toc time',
                         suffixText: 'secs',
                         keyboardType: TextInputType.number,
                         validator: numValidator),
@@ -442,8 +442,8 @@ class _ExercisePageState extends State<ExercisePage>
                                 reps: int.parse(reps.text),
                                 secsStart: num.parse(secsStart.text),
                                 secsRest: num.parse(secsRest.text),
-                                ticTime: num.parse(secsUp.text),
-                                tocTime: num.parse(secsDown.text));
+                                ticTime: num.parse(secsTic.text),
+                                tocTime: num.parse(secsToc.text));
                             if (exercise == null) {
                               exercise = newExercise;
                               provider.Provider.of<Library>(context,
