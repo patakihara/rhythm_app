@@ -1067,22 +1067,21 @@ class _ExpandableSheetState extends State<ExpandableSheet> {
                 return AnimatedBuilder(
                   animation: widget.showController,
                   builder: (context, child) {
-                    Animation<double> top1 = Tween<double>(
-                            begin: actualConstraints.maxHeight,
-                            end: actualConstraints.maxHeight -
-                                widget.initialHeight)
-                        .animate(widget.showController);
-
                     Animation<double> top2 = Tween<double>(
                             begin: actualConstraints.maxHeight -
                                 widget.initialHeight,
                             end: 0)
                         .animate(widget.controller);
 
+                    Animation<double> top3 =
+                        Tween<double>(begin: widget.initialHeight, end: 0)
+                            .animate(widget.showController);
+
                     return Positioned(
-                      top: !widget.showController.isCompleted
-                          ? top1.value
-                          : top2.value,
+                      top: top2.value + top3.value,
+                      // !widget.showController.isCompleted
+                      //     ? top1.value
+                      //     : top2.value,
                       child: child,
                     );
                   },
@@ -1166,14 +1165,14 @@ class ExpandableBox extends StatefulWidget {
   ExpandableBox({
     Key key,
     this.child,
-    this.maxHeight,
-    this.minHeight,
+    @required this.maxHeight,
+    @required this.minHeight,
     @required this.controller,
     Animation<double> height,
   })  : this.height = height ??
             Tween<double>(begin: minHeight, end: maxHeight).animate(controller),
         super(key: key) {
-    assert((minHeight != null && maxHeight != null) || height != null);
+    // assert((minHeight != null && maxHeight != null) || height != null);
   }
 
   final Widget child;
@@ -1187,11 +1186,14 @@ class ExpandableBox extends StatefulWidget {
 }
 
 class _ExpandableBoxState extends State<ExpandableBox> {
-  bool fromStart;
+  bool fromStart = true;
+
+  double get deltaHeight => widget.maxHeight - widget.minHeight;
 
   @override
   void initState() {
     super.initState();
+
     widget.controller.addStatusListener((status) {
       if (widget.controller.isCompleted)
         setState(() {
@@ -1216,16 +1218,15 @@ class _ExpandableBoxState extends State<ExpandableBox> {
             widget.controller.fling(velocity: 2);
         },
         onVerticalDragUpdate: (details) {
-          final newValue = widget.controller.value -
-              details.primaryDelta / MediaQuery.of(context).size.height;
+          final newValue =
+              widget.controller.value - details.primaryDelta / deltaHeight;
           if (newValue >= 0 && newValue <= 1) {
             widget.controller.value = newValue;
           }
         },
         onVerticalDragEnd: (details) {
           final threshold = 1.0;
-          final velocity = -details.velocity.pixelsPerSecond.dy /
-              MediaQuery.of(context).size.height;
+          final velocity = -details.velocity.pixelsPerSecond.dy / deltaHeight;
 
           final velocityCheck = velocity.abs() >= threshold;
           final positionCheck = (fromStart && widget.controller.value > 0.5) ||
@@ -1245,7 +1246,7 @@ class _ExpandableBoxState extends State<ExpandableBox> {
         child: ConstrainedBox(
           constraints: BoxConstraints(
             maxHeight: widget.height.value,
-            minHeight: widget.minHeight ?? 56,
+            minHeight: widget.minHeight,
           ),
           child: child,
         ),
