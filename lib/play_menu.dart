@@ -34,12 +34,16 @@ class _PlayMenuState extends State<PlayMenu> with TickerProviderStateMixin {
 
   Animation<Color> color;
 
-  final double bigPlayCardMaxHeight = 56.0 * 5;
+  final double bigPlayCardMaxHeight = 56.0 * 4;
   bool openQueue = false;
   AnimationController queueController;
   Animation<double> queueHeight;
   double maxQueueHeight;
   double minQueueHeight;
+  double queueBarHeight = 56.0 + 48;
+
+  double bigPlayCardElevation = 0;
+  ScrollController queueScrollController = ScrollController();
 
   AnimationController playStateController;
 
@@ -151,10 +155,11 @@ class _PlayMenuState extends State<PlayMenu> with TickerProviderStateMixin {
 
     queueController = AnimationController(vsync: this, value: 0);
 
-    maxQueueHeight = MediaQuery.of(context).size.height -
-        MediaQuery.of(context).viewPadding.top -
-        56 +
-        16;
+    maxQueueHeight = MediaQuery.of(context).size.height - 48;
+    // -
+    //     MediaQuery.of(context).viewPadding.top -
+    //     56 +
+    //     16;
     minQueueHeight = bigPlayCardMaxHeight;
 
     queueHeight = Tween<double>(begin: minQueueHeight, end: maxQueueHeight)
@@ -168,6 +173,23 @@ class _PlayMenuState extends State<PlayMenu> with TickerProviderStateMixin {
       } else if (status == AnimationStatus.dismissed) {
         setState(() {
           openQueue = false;
+        });
+      }
+    });
+
+    if (Theme.of(context).brightness == Brightness.dark)
+      bigPlayCardElevation = 1;
+
+    queueScrollController.addListener(() {
+      if (queueScrollController.offset > 0 && bigPlayCardElevation < 2) {
+        setState(() {
+          bigPlayCardElevation = 2;
+        });
+      } else if (queueScrollController.offset == 0 &&
+          bigPlayCardElevation == 2) {
+        setState(() {
+          bigPlayCardElevation =
+              Theme.of(context).brightness == Brightness.dark ? 1 : 0;
         });
       }
     });
@@ -230,10 +252,10 @@ class _PlayMenuState extends State<PlayMenu> with TickerProviderStateMixin {
                             animation: queueController,
                             builder: (context, child) => Positioned(
                               top: Tween<double>(
-                                      begin: -56 -
+                                      begin: -(queueBarHeight +
                                           MediaQuery.of(context)
                                               .viewPadding
-                                              .top,
+                                              .top),
                                       end: 0)
                                   .animate(
                                     CurvedAnimation(
@@ -262,58 +284,140 @@ class _PlayMenuState extends State<PlayMenu> with TickerProviderStateMixin {
                                                 .colorScheme
                                                 .secondary
                                                 .withOpacity(.06),
-                                    alignment:
-                                        AlignmentDirectional.bottomCenter,
-                                    height: 56 +
+                                    alignment: AlignmentDirectional.topCenter,
+                                    height: queueBarHeight +
                                         MediaQuery.of(context).viewPadding.top,
                                     width: MediaQuery.of(context).size.width,
-                                    child: SizedBox(
-                                      height: 56,
-                                      child: Row(
-                                        children: [
-                                          IconButton(
-                                            padding: const EdgeInsets.all(16.0),
-                                            icon: Icon(Icons.close),
-                                            onPressed: () {
-                                              queueController.fling(
-                                                  velocity: -1);
-                                            },
-                                          ),
-                                          Expanded(
-                                            child: Center(
-                                              child: Text(
-                                                (nowPlaying.inSet
-                                                        ? nowPlaying.currentRep
-                                                            .pluralString('rep')
-                                                        : nowPlaying.inReady
-                                                            ? 'Ready'
-                                                            : nowPlaying.inRest
-                                                                ? 'Rest'
-                                                                : 'Done') +
-                                                    (!nowPlaying.inEnd
-                                                        ? ', ' +
-                                                            nowPlaying
-                                                                .currentSet
-                                                                .cardinal() +
-                                                            ' set'
-                                                        : ', ' +
-                                                            nowPlaying
-                                                                .currentSet
-                                                                .pluralString(
-                                                                    'set')),
-                                                style: Theme.of(context)
-                                                    .textTheme
-                                                    .bodyText1
-                                                    .apply(
-                                                        color: Theme.of(context)
-                                                            .colorScheme
-                                                            .onSurface),
-                                                overflow: TextOverflow.ellipsis,
+                                    child: Opacity(
+                                      opacity: Tween<double>(begin: 0, end: 1)
+                                          .animate(
+                                            CurvedAnimation(
+                                              parent: queueController,
+                                              curve: Interval(
+                                                0.7,
+                                                1.0,
                                               ),
+                                            ),
+                                          )
+                                          .value,
+                                      child: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          AppBar(
+                                            backwardsCompatibility: false,
+                                            backgroundColor: Colors.transparent,
+                                            foregroundColor: Theme.of(context)
+                                                .colorScheme
+                                                .onSurface,
+                                            elevation: 0,
+                                            title: Text('Queue'),
+                                            leading: IconButton(
+                                              icon: Icon(Icons.close),
+                                              onPressed: () {
+                                                queueController.fling(
+                                                    velocity: -1);
+                                              },
                                             ),
                                           ),
                                           SizedBox(
-                                            width: 56,
+                                            // height: 48,
+                                            child: Row(
+                                              children: [
+                                                SizedBox(
+                                                  width: 56.0 + 16,
+                                                ),
+                                                Expanded(
+                                                  child: Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    mainAxisSize:
+                                                        MainAxisSize.max,
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .center,
+                                                    children: [
+                                                      Text(
+                                                        (nowPlaying.exercise !=
+                                                                    null
+                                                                ? nowPlaying
+                                                                    .exercise
+                                                                    .name
+                                                                : 'No exercise') +
+                                                            '  ·  ' +
+                                                            (nowPlaying.inSet
+                                                                ? nowPlaying
+                                                                    .currentRep
+                                                                    .pluralString(
+                                                                        'rep')
+                                                                : nowPlaying
+                                                                        .inReady
+                                                                    ? 'Ready'
+                                                                    : nowPlaying
+                                                                            .inRest
+                                                                        ? 'Rest'
+                                                                        : 'Done') +
+                                                            (!nowPlaying.inEnd
+                                                                ? ', ' +
+                                                                    nowPlaying
+                                                                        .currentSet
+                                                                        .cardinal() +
+                                                                    ' set'
+                                                                : ', ' +
+                                                                    nowPlaying
+                                                                        .currentSet
+                                                                        .pluralString(
+                                                                            'set')),
+                                                        style: Theme.of(context)
+                                                            .textTheme
+                                                            .bodyText1
+                                                            .apply(
+                                                                color: Theme.of(
+                                                                        context)
+                                                                    .colorScheme
+                                                                    .onSurface),
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                      ),
+                                                      if (nowPlaying.plan !=
+                                                              null &&
+                                                          nowPlaying
+                                                                  .plan.name !=
+                                                              '')
+                                                        Padding(
+                                                          padding:
+                                                              const EdgeInsets
+                                                                      .only(
+                                                                  top: 4.0),
+                                                          child: Text(
+                                                            nowPlaying.plan !=
+                                                                    null
+                                                                ? nowPlaying
+                                                                    .plan.name
+                                                                : 'No plan',
+                                                            style: Theme.of(
+                                                                    context)
+                                                                .textTheme
+                                                                .bodyText1
+                                                                .apply(
+                                                                    fontWeightDelta:
+                                                                        -1,
+                                                                    color: Theme.of(
+                                                                            context)
+                                                                        .colorScheme
+                                                                        .onBackground
+                                                                        .withOpacity(
+                                                                            .6)),
+                                                            overflow:
+                                                                TextOverflow
+                                                                    .ellipsis,
+                                                          ),
+                                                        ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
                                           ),
                                         ],
                                       ),
@@ -372,6 +476,7 @@ class _PlayMenuState extends State<PlayMenu> with TickerProviderStateMixin {
                     children: [
                       ListView.builder(
                         itemCount: nowPlaying.plan.exerciseNames.length,
+                        controller: queueScrollController,
                         itemExtent: 72,
                         padding: EdgeInsets.only(top: bigPlayCardMaxHeight),
                         itemBuilder: (_, int i) {
@@ -406,7 +511,7 @@ class _PlayMenuState extends State<PlayMenu> with TickerProviderStateMixin {
                       SizedBox(
                         height: bigPlayCardMaxHeight,
                         child: Card(
-                          elevation: 1,
+                          elevation: bigPlayCardElevation,
                           margin: EdgeInsets.all(0),
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.zero),
@@ -431,43 +536,59 @@ class _PlayMenuState extends State<PlayMenu> with TickerProviderStateMixin {
                                       ),
                                     ),
                                   ),
-                                  Padding(
-                                    // Exercise and plan name
-                                    padding: const EdgeInsets.only(
-                                        top: 20, bottom: 8),
-                                    child: Column(
-                                      children: [
-                                        Text(
-                                          nowPlaying.exercise.name,
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .headline5
-                                              .apply(
-                                                color: Theme.of(context)
-                                                    .colorScheme
-                                                    .onBackground
-                                                    .withAlpha(255),
-                                              ),
-                                        ),
-                                        nowPlaying.plan.name != ''
-                                            ? Padding(
-                                                padding: const EdgeInsets.only(
-                                                    bottom: 8.0, top: 4.0),
-                                                child: Text(
-                                                  nowPlaying.plan.name,
-                                                  style: Theme.of(context)
-                                                      .textTheme
-                                                      .subtitle2
-                                                      .apply(
-                                                        color: Theme.of(context)
-                                                            .colorScheme
-                                                            .onBackground
-                                                            .withAlpha(160),
-                                                      ),
+                                  Opacity(
+                                    opacity: Tween<double>(begin: 1, end: 0)
+                                        .animate(
+                                          CurvedAnimation(
+                                            parent: queueController,
+                                            curve: Interval(
+                                              0.3,
+                                              0.8,
+                                            ),
+                                          ),
+                                        )
+                                        .value,
+                                    child: Padding(
+                                      // Exercise and plan name
+                                      padding: const EdgeInsets.only(
+                                          top: 20, bottom: 8),
+                                      child: Column(
+                                        children: [
+                                          Text(
+                                            nowPlaying.exercise.name,
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .headline5
+                                                .apply(
+                                                  color: Theme.of(context)
+                                                      .colorScheme
+                                                      .onBackground
+                                                      .withAlpha(255),
                                                 ),
-                                              )
-                                            : SizedBox(height: 0),
-                                      ],
+                                          ),
+                                          nowPlaying.plan.name != ''
+                                              ? Padding(
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                          bottom: 8.0,
+                                                          top: 4.0),
+                                                  child: Text(
+                                                    nowPlaying.plan.name,
+                                                    style: Theme.of(context)
+                                                        .textTheme
+                                                        .subtitle2
+                                                        .apply(
+                                                          color: Theme.of(
+                                                                  context)
+                                                              .colorScheme
+                                                              .onBackground
+                                                              .withAlpha(160),
+                                                        ),
+                                                  ),
+                                                )
+                                              : SizedBox(height: 0),
+                                        ],
+                                      ),
                                     ),
                                   ),
                                   Padding(
@@ -592,54 +713,54 @@ class _PlayMenuState extends State<PlayMenu> with TickerProviderStateMixin {
                                   ),
                                 ],
                               ),
-                              AnimatedContainer(
-                                curve: Curves.fastOutSlowIn,
-                                duration: Duration(milliseconds: 500),
-                                color: nowPlaying.repState == RepState.rest
-                                    ? Theme.of(context)
-                                        .colorScheme
-                                        .background
-                                        .withOpacity(.5)
-                                    : nowPlaying.repState == RepState.up
-                                        ? Theme.of(context)
-                                            .colorScheme
-                                            .primary
-                                            .withOpacity(.06)
-                                        : Theme.of(context)
-                                            .colorScheme
-                                            .secondary
-                                            .withOpacity(.06),
-                                child: ListTile(
-                                  trailing: Transform.rotate(
-                                      angle: 3.1416 * queueController.value,
-                                      child: Icon(Icons.keyboard_arrow_up)),
-                                  leading: Icon(Icons.playlist_play),
-                                  dense: false,
-                                  onTap: () {
-                                    if (!openQueue)
-                                      queueController.fling(velocity: 2);
-                                    else
-                                      queueController.fling(velocity: -2);
-                                  },
-                                  title: Text(
-                                    nowPlaying.exerciseIndex <
-                                            nowPlaying
-                                                    .plan.exerciseNames.length -
-                                                1
-                                        ? 'Up next: ' +
-                                            nowPlaying.plan.exerciseNames[
-                                                nowPlaying.exerciseIndex + 1]
-                                        : 'Last exercise',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .caption
-                                        .apply(
-                                            color: Theme.of(context)
-                                                .iconTheme
-                                                .color),
-                                  ),
-                                ),
-                              ),
+                              // AnimatedContainer(
+                              //   curve: Curves.fastOutSlowIn,
+                              //   duration: Duration(milliseconds: 500),
+                              //   color: nowPlaying.repState == RepState.rest
+                              //       ? Theme.of(context)
+                              //           .colorScheme
+                              //           .background
+                              //           .withOpacity(.5)
+                              //       : nowPlaying.repState == RepState.up
+                              //           ? Theme.of(context)
+                              //               .colorScheme
+                              //               .primary
+                              //               .withOpacity(.06)
+                              //           : Theme.of(context)
+                              //               .colorScheme
+                              //               .secondary
+                              //               .withOpacity(.06),
+                              //   child: ListTile(
+                              //     trailing: Transform.rotate(
+                              //         angle: 3.1416 * queueController.value,
+                              //         child: Icon(Icons.keyboard_arrow_up)),
+                              //     leading: Icon(Icons.playlist_play),
+                              //     dense: false,
+                              //     onTap: () {
+                              //       if (!openQueue)
+                              //         queueController.fling(velocity: 2);
+                              //       else
+                              //         queueController.fling(velocity: -2);
+                              //     },
+                              //     title: Text(
+                              //       nowPlaying.exerciseIndex <
+                              //               nowPlaying
+                              //                       .plan.exerciseNames.length -
+                              //                   1
+                              //           ? 'Up next: ' +
+                              //               nowPlaying.plan.exerciseNames[
+                              //                   nowPlaying.exerciseIndex + 1]
+                              //           : 'Last exercise',
+                              //       style: Theme.of(context)
+                              //           .textTheme
+                              //           .caption
+                              //           .apply(
+                              //               color: Theme.of(context)
+                              //                   .iconTheme
+                              //                   .color),
+                              //     ),
+                              //   ),
+                              // ),
                             ],
                           ),
                         ),
