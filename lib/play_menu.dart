@@ -195,6 +195,8 @@ class _PlayMenuState extends State<PlayMenu> with TickerProviderStateMixin {
 
     if (Theme.of(context).brightness == Brightness.dark)
       bigPlayCardElevation = 1;
+    else
+      bigPlayCardElevation = 0;
   }
 
   @override
