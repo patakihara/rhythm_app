@@ -1015,9 +1015,12 @@ class _ExpandableSheetState extends State<ExpandableSheet> {
     actualConstraints = BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height,
         maxWidth: MediaQuery.of(context).size.width);
+
+    deltaHeight = actualConstraints.maxHeight - actualConstraints.minHeight;
   }
 
   BoxConstraints actualConstraints;
+  double deltaHeight;
 
   @override
   Widget build(BuildContext context) {
@@ -1067,10 +1070,13 @@ class _ExpandableSheetState extends State<ExpandableSheet> {
                 return AnimatedBuilder(
                   animation: widget.showController,
                   builder: (context, child) {
+                    var bottom = (Tween<double>(begin: -1, end: 0)
+                            .animate(widget.showController)
+                            .value *
+                        height.value);
                     return Positioned(
-                      bottom: Tween<double>(begin: -1, end: 0)
-                              .animate(widget.showController)
-                              .value *
+                      top: MediaQuery.of(context).size.height -
+                          bottom -
                           height.value,
                       child: child,
                     );
@@ -1083,7 +1089,7 @@ class _ExpandableSheetState extends State<ExpandableSheet> {
                     },
                     onVerticalDragUpdate: (details) {
                       final newValue = widget.controller.value -
-                          details.primaryDelta / actualConstraints.maxHeight;
+                          details.primaryDelta / deltaHeight;
                       if (!triedToDismiss && newValue >= 0 && newValue <= 1) {
                         widget.controller.value = newValue;
                       } else if (newValue < 0 &&
@@ -1113,8 +1119,8 @@ class _ExpandableSheetState extends State<ExpandableSheet> {
                       }
 
                       final threshold = 2.0;
-                      final velocity = -details.velocity.pixelsPerSecond.dy /
-                          actualConstraints.maxHeight;
+                      final velocity =
+                          -details.velocity.pixelsPerSecond.dy / deltaHeight;
 
                       final velocityCheck = velocity.abs() >= threshold;
                       final positionCheck =
@@ -1204,8 +1210,7 @@ class _ExpandableBoxState extends State<ExpandableBox> {
       builder: (context, child) => GestureDetector(
         behavior: HitTestBehavior.translucent,
         onTap: () {
-          if (widget.controller.isDismissed)
-            widget.controller.fling(velocity: 2);
+          if (widget.controller.isDismissed) widget.controller.fling();
         },
         onVerticalDragUpdate: (details) {
           final newValue =
@@ -1229,9 +1234,9 @@ class _ExpandableBoxState extends State<ExpandableBox> {
           if (velocityCheck)
             widget.controller.fling(velocity: velocity);
           else if (positionCheck)
-            widget.controller.fling(velocity: fromStart ? 2 : -2);
+            widget.controller.fling(velocity: fromStart ? 1 : -1);
           else
-            widget.controller.fling(velocity: fromStart ? -2 : 2);
+            widget.controller.fling(velocity: fromStart ? -1 : 1);
         },
         child: ConstrainedBox(
           constraints: BoxConstraints(
