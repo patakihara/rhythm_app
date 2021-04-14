@@ -92,7 +92,8 @@ class _ExercisePageState extends State<ExercisePage>
         checkIfValid();
       });
 
-    editStateController = AnimationController(vsync: this);
+    editStateController =
+        AnimationController(vsync: this, value: editing ? 1 : 0);
     fabSize = Tween<double>(begin: 56, end: 0).animate(
       CurvedAnimation(
         parent: editStateController,
@@ -227,6 +228,7 @@ class _ExercisePageState extends State<ExercisePage>
   Widget build(BuildContext context) {
     if (context.watch<NowPlaying>().playing &&
         context.watch<NowPlaying>().plan.name == '' &&
+        exercise != null &&
         context.watch<NowPlaying>().exercise.name == exercise.name &&
         playStateController.isDismissed) {
       playStateController.fling();
@@ -256,7 +258,7 @@ class _ExercisePageState extends State<ExercisePage>
               icon: AnimatedBuilder(
                 animation: editStateController,
                 builder: (context, child) => Opacity(
-                  opacity: editStateController.value,
+                  opacity: exercise == null ? 0 : editStateController.value,
                   child: Icon(
                     Icons.delete,
                   ),

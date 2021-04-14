@@ -122,7 +122,13 @@ class _PlanPageState extends State<PlanPage> with TickerProviderStateMixin {
     return res;
   }
 
-  List<Key> keys = [];
+  List<Key> get keys {
+    var _keys = <Key>[];
+    for (var i = 0; i < exerciseNames.length; i++) {
+      _keys.add(Key(exerciseNames[i] + DateTime.now().toString()));
+    }
+    return _keys;
+  }
 
   final _scaffoldKey = GlobalKey<ScaffoldState>();
 
@@ -138,9 +144,7 @@ class _PlanPageState extends State<PlanPage> with TickerProviderStateMixin {
     if (plan != null) {
       name = plan.name;
       exerciseNames = plan.exerciseNames.sublist(0);
-      for (var i = 0; i < exerciseNames.length; i++) {
-        keys.add(Key(exerciseNames[i] + DateTime.now().toString()));
-      }
+
       fromCard = true;
     } else {
       exerciseNames = <String>[];
@@ -158,7 +162,10 @@ class _PlanPageState extends State<PlanPage> with TickerProviderStateMixin {
       });
     });
 
-    editStateController = AnimationController(vsync: this);
+    editStateController = AnimationController(
+      vsync: this,
+      value: editing ? 1 : 0,
+    );
     fabSize = Tween<double>(begin: 56, end: 0).animate(
       CurvedAnimation(
         parent: editStateController,
@@ -241,7 +248,6 @@ class _PlanPageState extends State<PlanPage> with TickerProviderStateMixin {
                 onDismissed: (_) {
                   setState(() {
                     exerciseNames.removeAt(i);
-                    keys.removeAt(i);
                     updateChanged();
                   });
                 },
@@ -299,7 +305,6 @@ class _PlanPageState extends State<PlanPage> with TickerProviderStateMixin {
                 if (value != 'New exercise')
                   setState(() {
                     exerciseNames.add(value);
-                    keys.add(Key(value + DateTime.now().toString()));
                     updateChanged();
                   });
                 else {
@@ -315,7 +320,6 @@ class _PlanPageState extends State<PlanPage> with TickerProviderStateMixin {
                     if (value != null)
                       setState(() {
                         exerciseNames.add(value);
-                        keys.add(Key(value + DateTime.now().toString()));
                         updateChanged();
                       });
                   });
@@ -483,6 +487,7 @@ class _PlanPageState extends State<PlanPage> with TickerProviderStateMixin {
     var initialHeight = height1 > height2 ? height2 : height1;
 
     if (context.watch<NowPlaying>().playing &&
+        plan != null &&
         context.watch<NowPlaying>().plan.name == plan.name &&
         playStateController.isDismissed) {
       playStateController.fling();
@@ -815,7 +820,7 @@ class _PlanPageState extends State<PlanPage> with TickerProviderStateMixin {
               icon: AnimatedBuilder(
                 animation: editStateController,
                 builder: (context, child) => Opacity(
-                  opacity: editStateController.value,
+                  opacity: plan == null ? 0 : editStateController.value,
                   child: Icon(
                     Icons.delete,
                   ),
