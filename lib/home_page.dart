@@ -335,6 +335,11 @@ class _TimersMenuState extends State<TimersMenu> with TickerProviderStateMixin {
               fabController.status == AnimationStatus.reverse)) {
         fabController.fling(velocity: 2);
       }
+      if (value < 0.5) {
+        menuProvider.tabMenu = TabMenu.plans;
+      } else {
+        menuProvider.tabMenu = TabMenu.exercises;
+      }
     });
 
     tabController.addListener(() {
@@ -344,11 +349,11 @@ class _TimersMenuState extends State<TimersMenu> with TickerProviderStateMixin {
       //   menuProvider.appBarElevated = false;
       // }
 
-      if (tabController.index == 0) {
-        menuProvider.tabMenu = TabMenu.plans;
-      } else {
-        menuProvider.tabMenu = TabMenu.exercises;
-      }
+      // if (tabController.index == 0) {
+      //   menuProvider.tabMenu = TabMenu.plans;
+      // } else {
+      //   menuProvider.tabMenu = TabMenu.exercises;
+      // }
 
       if ((tabController.animation.value == 0.0 ||
               tabController.animation.value == 1.0) &&
@@ -683,7 +688,10 @@ class _TimersMenuState extends State<TimersMenu> with TickerProviderStateMixin {
                           ),
                         ),
                         child: Icon(
-                          Icons.add,
+                          menuProvider.tabMenu == TabMenu.plans
+                              ? Icons.playlist_add
+                              : Icons
+                                  .timer, // TODO: add custom icon with a plus
                         ),
                       ),
                     ),
