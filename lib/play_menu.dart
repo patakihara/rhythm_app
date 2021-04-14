@@ -48,25 +48,57 @@ class _PlayMenuState extends State<PlayMenu> with TickerProviderStateMixin {
   AnimationController playStateController;
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
+  void initState() {
+    super.initState();
+
     controller = AnimationController(
         vsync: this, duration: Duration(milliseconds: 1000));
-
-    showController = AnimationController(
-        vsync: this,
-        duration: Duration(milliseconds: 1000),
-        value: context.read<NowPlaying>().empty ? 0 : 1);
-
-    // showController.addListener(() {
-    //   print('value: ' + showController.value.toString());
-    // });
 
     controller.addStatusListener((status) {
       if (controller.isDismissed && queueController.isCompleted)
         queueController.fling(velocity: -0.1);
       setState(() {});
     });
+
+    showController = AnimationController(
+        vsync: this,
+        duration: Duration(milliseconds: 1000),
+        value: context.read<NowPlaying>().empty ? 0 : 1);
+
+    playStateController = AnimationController(vsync: this);
+
+    queueController = AnimationController(vsync: this, value: 0);
+
+    queueController.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        setState(() {
+          openQueue = true;
+        });
+      } else if (status == AnimationStatus.dismissed) {
+        setState(() {
+          openQueue = false;
+        });
+      }
+    });
+
+    queueScrollController.addListener(() {
+      if (queueScrollController.offset > 0 && bigPlayCardElevation < 2) {
+        setState(() {
+          bigPlayCardElevation = 2;
+        });
+      } else if (queueScrollController.offset == 0 &&
+          bigPlayCardElevation == 2) {
+        setState(() {
+          bigPlayCardElevation =
+              Theme.of(context).brightness == Brightness.dark ? 1 : 0;
+        });
+      }
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
 
     playPageFade = Tween<double>(begin: 0, end: 1.0).animate(CurvedAnimation(
       parent: controller,
@@ -151,10 +183,6 @@ class _PlayMenuState extends State<PlayMenu> with TickerProviderStateMixin {
       ),
     );
 
-    playStateController = AnimationController(vsync: this);
-
-    queueController = AnimationController(vsync: this, value: 0);
-
     maxQueueHeight = MediaQuery.of(context).size.height - 48;
     // -
     //     MediaQuery.of(context).viewPadding.top -
@@ -165,34 +193,8 @@ class _PlayMenuState extends State<PlayMenu> with TickerProviderStateMixin {
     queueHeight = Tween<double>(begin: minQueueHeight, end: maxQueueHeight)
         .animate(queueController);
 
-    queueController.addStatusListener((status) {
-      if (status == AnimationStatus.completed) {
-        setState(() {
-          openQueue = true;
-        });
-      } else if (status == AnimationStatus.dismissed) {
-        setState(() {
-          openQueue = false;
-        });
-      }
-    });
-
     if (Theme.of(context).brightness == Brightness.dark)
       bigPlayCardElevation = 1;
-
-    queueScrollController.addListener(() {
-      if (queueScrollController.offset > 0 && bigPlayCardElevation < 2) {
-        setState(() {
-          bigPlayCardElevation = 2;
-        });
-      } else if (queueScrollController.offset == 0 &&
-          bigPlayCardElevation == 2) {
-        setState(() {
-          bigPlayCardElevation =
-              Theme.of(context).brightness == Brightness.dark ? 1 : 0;
-        });
-      }
-    });
   }
 
   @override
