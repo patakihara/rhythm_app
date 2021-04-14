@@ -359,6 +359,7 @@ class MenuProvider extends ChangeNotifier {
 
   set inPlanPage(bool value) {
     _inPlanPage = value;
+    if (!value) appBarElevated = false;
     notifyListeners();
   }
 
@@ -366,6 +367,7 @@ class MenuProvider extends ChangeNotifier {
 
   set inExercisePage(bool value) {
     _inExercisePage = value;
+    if (!value) appBarElevated = false;
     notifyListeners();
   }
 

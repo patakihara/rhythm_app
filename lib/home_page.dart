@@ -463,95 +463,104 @@ class _TimersMenuState extends State<TimersMenu> with TickerProviderStateMixin {
                   children: [
                     SizedBox(height: 24),
                     provider.Consumer<Library>(
-                        builder: (context, library, child) {
-                      var spacing = 8.0;
-                      var side = (MediaQuery.of(context).size.width -
-                              16.0 * 2 -
-                              spacing) /
-                          2;
-                      return library.plans.isEmpty
-                          ? Padding(
-                              padding: const EdgeInsets.only(left: 16.0),
-                              child: Text('No training plans',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .headline6
-                                      .apply(
-                                          color:
-                                              Theme.of(context).disabledColor,
-                                          fontWeightDelta: -1)),
-                            )
-                          : provider.Consumer2<NowPlaying, MenuProvider>(
-                              builder:
-                                  (context, nowPlaying, menuProvider, child) =>
-                                      GridView.count(
-                                shrinkWrap: true,
-                                physics: NeverScrollableScrollPhysics(),
-                                clipBehavior: Clip.hardEdge,
-                                primary: false,
-                                padding:
-                                    const EdgeInsets.only(left: 16, right: 16),
-                                crossAxisSpacing: spacing,
-                                mainAxisSpacing: spacing,
-                                crossAxisCount: 2,
-                                children: buildPlanCards(
-                                    context, library.plans, side, spacing,
+                      builder: (context, library, child) {
+                        var spacing = 8.0;
+                        var side = (MediaQuery.of(context).size.width -
+                                16.0 * 2 -
+                                spacing) /
+                            2;
+                        return library.plans.isEmpty
+                            ? Padding(
+                                padding: const EdgeInsets.only(left: 16.0),
+                                child: Text('No training plans',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .headline6
+                                        .apply(
+                                            color:
+                                                Theme.of(context).disabledColor,
+                                            fontWeightDelta: -1)),
+                              )
+                            : provider.Consumer2<NowPlaying, MenuProvider>(
+                                builder: (context, nowPlaying, menuProvider,
+                                        child) =>
+                                    GridView.count(
+                                  shrinkWrap: true,
+                                  physics: NeverScrollableScrollPhysics(),
+                                  clipBehavior: Clip.hardEdge,
+                                  primary: false,
+                                  padding: const EdgeInsets.only(
+                                      left: 16, right: 16),
+                                  crossAxisSpacing: spacing,
+                                  mainAxisSpacing: spacing,
+                                  crossAxisCount: 2,
+                                  children: buildPlanCards(
+                                    context,
+                                    library.plans,
+                                    side,
+                                    spacing,
                                     (index) async {
-                                  print('Animating to item');
-                                  var top = 24 +
-                                      ((index / 2).floor()) * side +
-                                      ((index / 2).floor() - 1) * spacing;
-                                  var bottom =
-                                      ((index / 2).floor() + 1) * side +
+                                      print('Animating to item');
+                                      var top = 24 +
+                                          ((index / 2).floor()) * side +
                                           ((index / 2).floor() - 1) * spacing;
-                                  var deltaTop = scrollController.offset - top;
-                                  var viewHeight =
-                                      MediaQuery.of(context).size.height -
-                                          56 - // appbar
-                                          48 - // tab bar
-                                          24 * 2 - // padding ??
-                                          menuProvider
-                                              .navBarBarHeight - // navBar
-                                          (!nowPlaying.empty
-                                              ? 56 + 20
-                                              : 0) - // playCard
+                                      var bottom = ((index / 2).floor() + 1) *
+                                              side +
+                                          ((index / 2).floor() - 1) * spacing;
+                                      var deltaTop =
+                                          scrollController.offset - top;
+                                      var viewHeight =
+                                          MediaQuery.of(context).size.height -
+                                              56 - // appbar
+                                              48 - // tab bar
+                                              24 * 2 - // padding ??
+                                              menuProvider
+                                                  .navBarBarHeight - // navBar
+                                              (!nowPlaying.empty
+                                                  ? 56 + 20
+                                                  : 0) - // playCard
+                                              MediaQuery.of(context)
+                                                  .viewPadding
+                                                  .top - //status bar
+                                              24 - // FAB spacing
+                                              (index % 2 == 1 ? 56 : 0) // FAB
+                                          ;
+                                      var deltaBottom =
+                                          (bottom - scrollController.offset) -
+                                              viewHeight;
+                                      print('Overflow is: ' +
+                                          deltaBottom.toString());
+                                      print('Total height is: ' +
                                           MediaQuery.of(context)
-                                              .viewPadding
-                                              .top - //status bar
-                                          24 - // FAB spacing
-                                          (index % 2 == 1 ? 56 : 0) // FAB
-                                      ;
-                                  var deltaBottom =
-                                      (bottom - scrollController.offset) -
-                                          viewHeight;
-                                  print(
-                                      'Overflow is: ' + deltaBottom.toString());
-                                  print('Total height is: ' +
-                                      MediaQuery.of(context)
-                                          .size
-                                          .height
-                                          .toString());
-                                  if (top < scrollController.offset)
-                                    await scrollController.animateTo(top,
-                                        duration: Duration(
-                                            milliseconds:
-                                                (100 * deltaTop / 200).round()),
-                                        curve: Curves.fastOutSlowIn);
-                                  else if (deltaBottom > 0) {
-                                    await scrollController.animateTo(
-                                        scrollController.offset +
-                                            deltaBottom +
-                                            8,
-                                        duration: Duration(
-                                            milliseconds:
-                                                (100 * (deltaBottom + 8) / 200)
+                                              .size
+                                              .height
+                                              .toString());
+                                      if (top < scrollController.offset)
+                                        await scrollController.animateTo(top,
+                                            duration: Duration(
+                                                milliseconds:
+                                                    (100 * deltaTop / 200)
+                                                        .round()),
+                                            curve: Curves.fastOutSlowIn);
+                                      else if (deltaBottom > 0) {
+                                        await scrollController.animateTo(
+                                            scrollController.offset +
+                                                deltaBottom +
+                                                8,
+                                            duration: Duration(
+                                                milliseconds: (100 *
+                                                        (deltaBottom + 8) /
+                                                        200)
                                                     .round()),
-                                        curve: Curves.fastOutSlowIn);
-                                  }
-                                }),
-                              ),
-                            );
-                    }),
+                                            curve: Curves.fastOutSlowIn);
+                                      }
+                                      // menuProvider.appBarElevated = false;
+                                    },
+                                  ),
+                                ),
+                              );
+                      },
+                    ),
                     SizedBox(height: MediaQuery.of(context).size.height / 3)
                   ]),
             ),
@@ -579,58 +588,59 @@ class _TimersMenuState extends State<TimersMenu> with TickerProviderStateMixin {
                                 builder: (context, nowPlaying, menuProvider,
                                         child) =>
                                     ListView(
-                                        physics: ClampingScrollPhysics(),
-                                        clipBehavior: Clip.none,
-                                        children: buildExericseTiles(
-                                            context, library.exercises,
-                                            (index) async {
-                                          print('Animating to item');
-                                          var top = 24 + index * 72.0;
-                                          var bottom = top + 72.0;
-                                          var deltaTop =
-                                              scrollController.offset - top;
-                                          var viewHeight =
+                                  physics: ClampingScrollPhysics(),
+                                  clipBehavior: Clip.none,
+                                  children: buildExericseTiles(
+                                    context,
+                                    library.exercises,
+                                    (index) async {
+                                      print('Animating to item');
+                                      var top = 24 + index * 72.0;
+                                      var bottom = top + 72.0;
+                                      var deltaTop =
+                                          scrollController.offset - top;
+                                      var viewHeight =
+                                          MediaQuery.of(context).size.height -
+                                              56 - // appbar
+                                              48 - // tab bar
+                                              24 * 2 - // padding ??
+                                              menuProvider
+                                                  .navBarBarHeight - // navBar
+                                              (!nowPlaying.empty
+                                                  ? 56 + 20
+                                                  : 0) - // playCard
                                               MediaQuery.of(context)
-                                                      .size
-                                                      .height -
-                                                  56 - // appbar
-                                                  48 - // tab bar
-                                                  24 * 2 - // padding ??
-                                                  menuProvider
-                                                      .navBarBarHeight - // navBar
-                                                  (!nowPlaying.empty
-                                                      ? 56 + 20
-                                                      : 0) - // playCard
-                                                  MediaQuery.of(context)
-                                                      .viewPadding
-                                                      .top - //status bar
-                                                  24 - // FAB spacing
-                                                  56 // FAB
-                                              ;
-                                          var deltaBottom = (bottom -
-                                                  scrollController.offset) -
+                                                  .viewPadding
+                                                  .top - //status bar
+                                              24 - // FAB spacing
+                                              56 // FAB
+                                          ;
+                                      var deltaBottom =
+                                          (bottom - scrollController.offset) -
                                               viewHeight;
-                                          if (top < scrollController.offset)
-                                            await scrollController.animateTo(
-                                                top,
-                                                duration: Duration(
-                                                    milliseconds:
-                                                        (100 * deltaTop / 200)
-                                                            .round()),
-                                                curve: Curves.fastOutSlowIn);
-                                          else if (deltaBottom > 0) {
-                                            await scrollController.animateTo(
-                                                scrollController.offset +
-                                                    deltaBottom +
-                                                    8,
-                                                duration: Duration(
-                                                    milliseconds: (100 *
-                                                            (deltaBottom + 8) /
-                                                            200)
+                                      if (top < scrollController.offset)
+                                        await scrollController.animateTo(top,
+                                            duration: Duration(
+                                                milliseconds:
+                                                    (100 * deltaTop / 200)
                                                         .round()),
-                                                curve: Curves.fastOutSlowIn);
-                                          }
-                                        })),
+                                            curve: Curves.fastOutSlowIn);
+                                      else if (deltaBottom > 0) {
+                                        await scrollController.animateTo(
+                                            scrollController.offset +
+                                                deltaBottom +
+                                                8,
+                                            duration: Duration(
+                                                milliseconds: (100 *
+                                                        (deltaBottom + 8) /
+                                                        200)
+                                                    .round()),
+                                            curve: Curves.fastOutSlowIn);
+                                      }
+                                      // menuProvider.appBarElevated = false;
+                                    },
+                                  ),
+                                ),
                               ),
                             )
                           : Padding(
