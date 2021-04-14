@@ -423,17 +423,19 @@ class _TimersMenuState extends State<TimersMenu> with TickerProviderStateMixin {
     // provider.Provider.of<Library>(context).fixDeadChildren();
     List<Widget> res = [];
     for (var i = 0; i < plans.length; i++) {
-      res.add(PlanCard(
-        key: Key(plans[i].key),
-        plan: plans[i],
-        width: side,
-        height: side,
-        image: 'assets/images/jpeg/image' + (i + 1).toString() + '.jpeg',
-        onTap: () async {
-          await onTap(i);
-          return;
-        },
-      ));
+      res.add(
+        PlanCard(
+          key: Key(plans[i].key),
+          plan: plans[i],
+          width: side,
+          height: side,
+          image: 'assets/images/jpeg/image' + (i + 1).toString() + '.jpeg',
+          onTap: () async {
+            await onTap(i);
+            return;
+          },
+        ),
+      );
       // res.add(SizedBox(width: spacing));
     }
     return res;
@@ -443,30 +445,35 @@ class _TimersMenuState extends State<TimersMenu> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: PreferredSize(
-          preferredSize: Size.fromHeight(48),
-          child: provider.Consumer<MenuProvider>(
-            builder: (context, menuProvider, child) => Material(
-                animationDuration: menuProvider.navBarTransitionDuration,
-                color: menuProvider.appBarElevated
-                    ? (Theme.of(context).brightness == Brightness.dark
-                        ? Colors.black
-                        : Theme.of(context).colorScheme.surface.withOpacity(1))
-                    : Theme.of(context).colorScheme.background,
-                elevation: menuProvider.appBarElevated ? 4 : 0,
-                child: TabBar(
-                    labelColor: Theme.of(context).colorScheme.onSurface,
-                    unselectedLabelColor:
-                        Theme.of(context).colorScheme.onSurface.withOpacity(.6),
-                    indicatorColor: Theme.of(context).colorScheme.onSurface,
-                    controller: tabController,
-                    indicatorSize: TabBarIndicatorSize.label,
-                    labelPadding: EdgeInsets.only(bottom: 8),
-                    indicatorPadding: EdgeInsets.only(bottom: 12, top: 12),
-                    labelStyle: Theme.of(context).textTheme.button.copyWith(
-                        fontFamily:
-                            Theme.of(context).textTheme.caption.fontFamily),
-                    tabs: [Tab(text: 'Plans'), Tab(text: 'Exercises')])),
-          )),
+        preferredSize: Size.fromHeight(48),
+        child: provider.Consumer<MenuProvider>(
+          builder: (context, menuProvider, child) => Material(
+            animationDuration: menuProvider.navBarTransitionDuration,
+            color: menuProvider.appBarElevated
+                ? (Theme.of(context).brightness == Brightness.dark
+                    ? Colors.black
+                    : Theme.of(context).colorScheme.surface.withOpacity(1))
+                : Theme.of(context).colorScheme.background,
+            elevation: menuProvider.appBarElevated ? 4 : 0,
+            child: TabBar(
+              labelColor: Theme.of(context).colorScheme.onSurface,
+              unselectedLabelColor:
+                  Theme.of(context).colorScheme.onSurface.withOpacity(.6),
+              indicatorColor: Theme.of(context).colorScheme.onSurface,
+              controller: tabController,
+              indicatorSize: TabBarIndicatorSize.label,
+              labelPadding: EdgeInsets.only(bottom: 8),
+              indicatorPadding: EdgeInsets.only(bottom: 12, top: 12),
+              labelStyle: Theme.of(context).textTheme.button.copyWith(
+                  fontFamily: Theme.of(context).textTheme.caption.fontFamily),
+              tabs: [
+                Tab(text: 'Plans'),
+                Tab(text: 'Exercises'),
+              ],
+            ),
+          ),
+        ),
+      ),
       body: TabBarView(
         controller: tabController,
         children: [

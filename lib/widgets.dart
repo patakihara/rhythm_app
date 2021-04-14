@@ -139,85 +139,104 @@ class PlanCard extends StatelessWidget {
   final String image;
   final Future<void> Function() onTap;
 
+  final double extra = 4;
+
   @override
   Widget build(BuildContext context) {
-    return provider.Consumer<NowPlaying>(
-      builder: (context, nowPlaying, child) => Card(
-        semanticContainer: false,
-        borderOnForeground: false,
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.all(Radius.circular(2))),
-        color: Theme.of(context).colorScheme.primary,
-        margin: EdgeInsets.all(0),
-        clipBehavior: Clip.hardEdge,
-        child: Stack(
-          fit: StackFit.expand,
-          alignment: AlignmentDirectional.center,
-          children: [
-            Image.asset(
-              image,
-              height: height,
-              width: width,
-              fit: BoxFit.cover,
-            ),
-            InkWell(
-              autofocus: true,
-              onTap: () async {
-                if (onTap != null) await onTap();
-                // provider.Provider.of<MenuProvider>(context, listen: false)
-                //     .showNavBar = false;
-                context.read<MenuProvider>().openPlan = plan;
-                context.read<MenuProvider>().inPlanPage = true;
-                // Timer(
-                //     provider.Provider.of<MenuProvider>(context, listen: false)
-                //         .navBarTransitionWait, () {
-                //   provider.Provider.of<MenuProvider>(context, listen: false)
-                //       .showNavBar = true;
-                //   provider.Provider.of<MenuProvider>(context, listen: false)
-                //       .inPlanPage = true;
-                // });
-              },
-              child: Container(
-                margin: EdgeInsets.all(0),
-                height: height,
-                width: width,
-                decoration: BoxDecoration(
-                    border: Border.all(width: 0),
-                    gradient: LinearGradient(
-                        begin: FractionalOffset.bottomCenter,
-                        end: FractionalOffset.topCenter,
-                        colors: [
-                          Colors.black.withOpacity(.90),
-                          Colors.black.withOpacity(.0)
-                        ])),
-                child: Padding(
-                  padding: EdgeInsets.all(20),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        plan.name,
-                        style: Theme.of(context)
-                            .textTheme
-                            .subtitle1
-                            .apply(color: Colors.white, fontWeightDelta: 1),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.only(top: 4.0),
-                        child: Text(
-                            plan.exercises.length.pluralString('exercise'),
-                            style: Theme.of(context)
-                                .textTheme
-                                .subtitle1
-                                .apply(color: Colors.white.withAlpha(190))),
-                      ),
-                    ],
+    return Center(
+      child: SizedBox(
+        height: height,
+        width: width,
+        child: Card(
+          semanticContainer: false,
+          borderOnForeground: false,
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.circular(2))),
+          color: Theme.of(context).colorScheme.primary,
+          margin: EdgeInsets.all(0),
+          clipBehavior: Clip.antiAliasWithSaveLayer,
+          child: FittedBox(
+            fit: BoxFit.none,
+            clipBehavior: Clip.antiAliasWithSaveLayer,
+            child: provider.Consumer<NowPlaying>(
+              builder: (context, nowPlaying, child) => Stack(
+                fit: StackFit.loose,
+                clipBehavior: Clip.antiAliasWithSaveLayer,
+                alignment: AlignmentDirectional.center,
+                children: [
+                  Image.asset(
+                    image,
+                    height: height + extra,
+                    width: width + extra,
+                    fit: BoxFit.cover,
                   ),
-                ),
+                  Material(
+                    color: Colors.transparent,
+                    elevation: 0,
+                    child: InkWell(
+                      autofocus: true,
+                      onTap: () async {
+                        if (onTap != null) await onTap();
+                        context.read<MenuProvider>().openPlan = plan;
+                        context.read<MenuProvider>().inPlanPage = true;
+                      },
+                      child: Ink(
+                        height: height + extra,
+                        width: width + extra,
+                        decoration: BoxDecoration(
+                          border: Border.all(width: 0),
+                          gradient: LinearGradient(
+                            begin: FractionalOffset.bottomCenter,
+                            end: FractionalOffset.topCenter,
+                            colors: [
+                              Colors.black.withOpacity(.90),
+                              Colors.black.withOpacity(.0)
+                            ],
+                          ),
+                        ),
+                        child: Center(
+                          child: SizedBox(
+                            height: height,
+                            width: width,
+                            child: Padding(
+                              padding: EdgeInsets.all(20),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    plan.name,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .subtitle1
+                                        .apply(
+                                            color: Colors.white,
+                                            fontWeightDelta: 1),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 4.0),
+                                    child: Text(
+                                        plan.exercises.length
+                                            .pluralString('exercise'),
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .subtitle1
+                                            .apply(
+                                                color: Colors.white
+                                                    .withAlpha(190))),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-          ],
+          ),
         ),
       ),
     );
