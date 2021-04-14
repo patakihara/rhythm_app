@@ -220,6 +220,7 @@ class _PlayMenuState extends State<PlayMenu> with TickerProviderStateMixin {
           controller: controller,
           showController: showController,
           onDismiss: nowPlaying.clear,
+          detectGestures: queueController.isDismissed,
           initialHeight: context.select<MenuProvider, double>(
               (menuProvider) => menuProvider.playCardHeight),
           sheet: Material(
@@ -233,7 +234,8 @@ class _PlayMenuState extends State<PlayMenu> with TickerProviderStateMixin {
                     child: Stack(
                       children: [
                         IgnorePointer(
-                            ignoring: (controller.isDismissed),
+                            ignoring: (controller.isDismissed ||
+                                queueController.isCompleted),
                             child: buildPlayPageTop(nowPlaying, context)),
                         buildSmallPlayCard(context),
                         Column(
@@ -428,16 +430,6 @@ class _PlayMenuState extends State<PlayMenu> with TickerProviderStateMixin {
                                     ),
                                   ),
                                 ),
-
-                                // SizedBox(
-                                //   height: 56 +
-                                //       MediaQuery.of(context).viewPadding.top,
-                                //   child: PreferredSize(
-                                //     preferredSize: Size.fromHeight(56 +
-                                //         MediaQuery.of(context).viewPadding.top),
-                                //     child: AppBar(),
-                                //   ),
-                                // ),
                               ),
                             ),
                           ),
@@ -481,7 +473,7 @@ class _PlayMenuState extends State<PlayMenu> with TickerProviderStateMixin {
                       ListView.builder(
                         itemCount: nowPlaying.plan.exerciseNames.length,
                         controller: queueScrollController,
-                        itemExtent: 72,
+                        // itemExtent: 72,
                         padding: EdgeInsets.only(top: bigPlayCardMaxHeight),
                         itemBuilder: (_, int i) {
                           bool currentlyPlaying() =>
@@ -489,9 +481,23 @@ class _PlayMenuState extends State<PlayMenu> with TickerProviderStateMixin {
                           bool willPlayLater() => i > nowPlaying.exerciseIndex;
                           bool hasPlayedBefore() =>
                               i < nowPlaying.exerciseIndex;
-                          return ExerciseTile(
+                          return ExerciseTileSmall(
                             selected: currentlyPlaying(),
                             exercise: nowPlaying.plan.exercises[i],
+                            leading: SizedBox(
+                              width: 72.0 - 32.0,
+                              child: Center(
+                                child: Text(
+                                  (i + 1).toString(),
+                                  style: TextStyle(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurface
+                                        .withOpacity(.6),
+                                  ),
+                                ),
+                              ),
+                            ),
                             onTap: () {
                               if (!currentlyPlaying()) {
                                 if (willPlayLater())

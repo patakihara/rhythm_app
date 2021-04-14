@@ -339,7 +339,7 @@ class MenuProvider extends ChangeNotifier {
   bool _inPlanPage = false;
   bool _inExercisePage = false;
   bool _appBarElevated = false;
-  final double _playCardHeight = 72;
+  final double _playCardHeight = 64;
   final double _navBarHeight = 56;
 
   bool flippedTheme = false;

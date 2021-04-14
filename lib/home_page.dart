@@ -1,6 +1,7 @@
 import 'package:audio_session/audio_session.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:rubber/rubber.dart';
 import 'package:animations/animations.dart';
 import 'package:provider/provider.dart' as provider;
@@ -67,148 +68,163 @@ class _HomePageState extends State<HomePage> {
     // return PlayMenu();
 
     return provider.Consumer<MenuProvider>(
-      builder: (context, menuProvider, child) => Scaffold(
-        key: scaffoldKey,
-        drawer: Drawer(
-          child: ListView(
-            children: [
-              DrawerHeader(
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                  child: Text('Rhythm')),
-              ListTile(
-                title: Text('Settings'),
-                leading: Icon(Icons.settings),
-                onTap: () {},
+      builder: (context, menuProvider, child) =>
+          AnnotatedRegion<SystemUiOverlayStyle>(
+        value: Theme.of(context).brightness == Brightness.light
+            ? SystemUiOverlayStyle.light.copyWith(
+                systemNavigationBarColor: Colors.white,
+                systemNavigationBarIconBrightness: Brightness.dark,
+                systemNavigationBarDividerColor: Colors.white,
+              )
+            : SystemUiOverlayStyle.dark.copyWith(
+                systemNavigationBarColor: Colors.black,
+                systemNavigationBarIconBrightness: Brightness.light,
+                systemNavigationBarDividerColor: Colors.black,
               ),
-              AboutListTile(
-                icon: Icon(Icons.info),
-                applicationName: 'Rhythm',
-                aboutBoxChildren: [Text('Gym timer and metronome.')],
-              ),
-              Divider(),
-              ListTile(
-                title: Text('Change theme'),
-                leading: Icon(
-                  Theme.of(context).brightness == Brightness.dark
-                      ? Icons.brightness_7
-                      : Icons.brightness_4,
+        child: Scaffold(
+          key: scaffoldKey,
+          drawer: Drawer(
+            child: ListView(
+              children: [
+                DrawerHeader(
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    child: Text('Rhythm')),
+                ListTile(
+                  title: Text('Settings'),
+                  leading: Icon(Icons.settings),
+                  onTap: () {},
                 ),
-                onTap: () {
-                  context.read<MenuProvider>().flipTheme();
-                },
-              ),
-            ],
+                AboutListTile(
+                  icon: Icon(Icons.info),
+                  applicationName: 'Rhythm',
+                  aboutBoxChildren: [Text('Gym timer and metronome.')],
+                ),
+                Divider(),
+                ListTile(
+                  title: Text('Change theme'),
+                  leading: Icon(
+                    Theme.of(context).brightness == Brightness.dark
+                        ? Icons.brightness_7
+                        : Icons.brightness_4,
+                  ),
+                  onTap: () {
+                    context.read<MenuProvider>().flipTheme();
+                  },
+                ),
+              ],
+            ),
           ),
-        ),
-        body: PlayMenu(
-          child: Container(
-            child: PageTransitionSwitcher(
-              duration: menuProvider.pageTransitionDuration,
-              transitionBuilder: (Widget child, Animation<double> animation,
-                  Animation<double> secondaryAnimation) {
-                return FadeThroughTransition(
-                  animation: animation,
-                  secondaryAnimation: secondaryAnimation,
-                  child: child,
-                );
-              },
-              child: (!menuProvider.inPlanPage && !menuProvider.inExercisePage)
-                  ? Container(
-                      key: ValueKey('homePage'),
-                      child: Scaffold(
-                        key: ValueKey('scaffoldHomePage'), //scaffoldKey,
-                        appBar: PreferredSize(
-                          preferredSize: Size.fromHeight(56),
-                          child: Material(
-                            animationDuration:
-                                menuProvider.navBarTransitionDuration,
-                            color: menuProvider.appBarElevated
-                                ? (Theme.of(context).brightness ==
-                                        Brightness.dark
-                                    ? Colors.black
-                                    : Theme.of(context)
-                                        .colorScheme
-                                        .surface
-                                        .withOpacity(1))
-                                : Theme.of(context).colorScheme.background,
-                            elevation: menuProvider.appBarElevated &&
-                                    menuProvider.menu != Menu.timers
-                                ? 4
-                                : 0,
-                            child: AppBar(
-                              leading: IconButton(
-                                icon: Icon(Icons.menu),
-                                onPressed: () {
-                                  scaffoldKey.currentState.openDrawer();
-                                },
-                              ),
-                              primary: true,
-                              centerTitle: false,
-                              title: Text(
-                                'Rhythm',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .headline5
-                                    .apply(
-                                        fontWeightDelta: 3,
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onSurface)
-                                    .copyWith(letterSpacing: -1.0),
-                              ),
-                              iconTheme: Theme.of(context).iconTheme.copyWith(
-                                  color: Theme.of(context)
+          body: PlayMenu(
+            child: Container(
+              child: PageTransitionSwitcher(
+                duration: menuProvider.pageTransitionDuration,
+                transitionBuilder: (Widget child, Animation<double> animation,
+                    Animation<double> secondaryAnimation) {
+                  return FadeThroughTransition(
+                    animation: animation,
+                    secondaryAnimation: secondaryAnimation,
+                    child: child,
+                  );
+                },
+                child: (!menuProvider.inPlanPage &&
+                        !menuProvider.inExercisePage)
+                    ? Container(
+                        key: ValueKey('homePage'),
+                        child: Scaffold(
+                          key: ValueKey('scaffoldHomePage'), //scaffoldKey,
+                          appBar: PreferredSize(
+                            preferredSize: Size.fromHeight(56),
+                            child: Material(
+                              animationDuration:
+                                  menuProvider.navBarTransitionDuration,
+                              color: menuProvider.appBarElevated
+                                  ? (Theme.of(context).brightness ==
+                                          Brightness.dark
+                                      ? Colors.black
+                                      : Theme.of(context)
+                                          .colorScheme
+                                          .surface
+                                          .withOpacity(1))
+                                  : Theme.of(context).colorScheme.background,
+                              elevation: menuProvider.appBarElevated &&
+                                      menuProvider.menu != Menu.timers
+                                  ? 4
+                                  : 0,
+                              child: AppBar(
+                                leading: IconButton(
+                                  icon: Icon(Icons.menu),
+                                  onPressed: () {
+                                    scaffoldKey.currentState.openDrawer();
+                                  },
+                                ),
+                                primary: true,
+                                centerTitle: false,
+                                title: Text(
+                                  'Rhythm',
+                                  style: Theme.of(context)
                                       .textTheme
                                       .headline5
-                                      .color),
-                              backgroundColor: Colors.transparent,
-                              elevation: 0,
+                                      .apply(
+                                          fontWeightDelta: 3,
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onSurface)
+                                      .copyWith(letterSpacing: -1.0),
+                                ),
+                                iconTheme: Theme.of(context).iconTheme.copyWith(
+                                    color: Theme.of(context)
+                                        .textTheme
+                                        .headline5
+                                        .color),
+                                backgroundColor: Colors.transparent,
+                                elevation: 0,
+                              ),
+                            ),
+                          ),
+                          body: Container(
+                            child: PageTransitionSwitcher(
+                              duration: menuProvider.pageTransitionDuration,
+                              transitionBuilder: (Widget child,
+                                  Animation<double> animation,
+                                  Animation<double> secondaryAnimation) {
+                                return FadeThroughTransition(
+                                  animation: animation,
+                                  secondaryAnimation: secondaryAnimation,
+                                  child: child,
+                                );
+                              },
+                              child: menuProvider.menuWidget,
                             ),
                           ),
                         ),
-                        body: Container(
-                          child: PageTransitionSwitcher(
-                            duration: menuProvider.pageTransitionDuration,
-                            transitionBuilder: (Widget child,
-                                Animation<double> animation,
-                                Animation<double> secondaryAnimation) {
-                              return FadeThroughTransition(
-                                animation: animation,
-                                secondaryAnimation: secondaryAnimation,
-                                child: child,
-                              );
-                            },
-                            child: menuProvider.menuWidget,
+                      )
+                    : menuProvider.inPlanPage
+                        ? Container(
+                            key: ValueKey('planPage'),
+                            child: PlanPage(
+                              plan: menuProvider.openPlan,
+                            ),
+                          )
+                        : Container(
+                            key: ValueKey('exercisePage'),
+                            child: ExercisePage(
+                              exercise: menuProvider.openExercise,
+                            ),
                           ),
-                        ),
-                      ),
-                    )
-                  : menuProvider.inPlanPage
-                      ? Container(
-                          key: ValueKey('planPage'),
-                          child: PlanPage(
-                            plan: menuProvider.openPlan,
-                          ),
-                        )
-                      : Container(
-                          key: ValueKey('exercisePage'),
-                          child: ExercisePage(
-                            exercise: menuProvider.openExercise,
-                          ),
-                        ),
+              ),
             ),
           ),
+          // bottomNavigationBar: AnimatedPlayCard(),
+          // bottomNavigationBar: Column(
+          //   mainAxisSize: MainAxisSize.min,
+          //   children: [
+          //     AnimatedPlayCard(),
+          //     buildBottomNavigationBar(context),
+          //   ],
+          // ),
         ),
-        // bottomNavigationBar: AnimatedPlayCard(),
-        // bottomNavigationBar: Column(
-        //   mainAxisSize: MainAxisSize.min,
-        //   children: [
-        //     AnimatedPlayCard(),
-        //     buildBottomNavigationBar(context),
-        //   ],
-        // ),
       ),
     );
   }

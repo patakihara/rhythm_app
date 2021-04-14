@@ -243,6 +243,11 @@ class _PlanPageState extends State<PlanPage> with TickerProviderStateMixin {
                 selected: currentlyPlaying() && !editing,
                 leading: SizedBox(
                   width: 72.0 - 32.0,
+                  child: Center(
+                    child: Text(
+                      '#',
+                    ),
+                  ),
                 ),
                 onTap: () {},
                 onDismissed: (_) {
@@ -252,12 +257,23 @@ class _PlanPageState extends State<PlanPage> with TickerProviderStateMixin {
                   });
                 },
               )
-            : ExerciseTile(
+            : ExerciseTileSmall(
                 key: keys[i],
                 exercise: exercises[i],
                 selected: currentlyPlaying() && !editing,
                 leading: SizedBox(
                   width: 72.0 - 32.0,
+                  child: Center(
+                    child: Text(
+                      (i + 1).toString(),
+                      style: TextStyle(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurface
+                            .withOpacity(.6),
+                      ),
+                    ),
+                  ),
                 ),
                 onTap: () {
                   if (!editing) {

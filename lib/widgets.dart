@@ -314,6 +314,77 @@ class ExerciseTile extends StatelessWidget {
   }
 }
 
+class ExerciseTileSmall extends StatelessWidget {
+  const ExerciseTileSmall({
+    Key key,
+    @required this.exercise,
+    this.leading,
+    this.trailing,
+    this.selected = false,
+    this.onTap,
+    this.width,
+  }) : super(key: key);
+
+  final Widget leading;
+  final Widget trailing;
+  final Exercise exercise;
+  final bool selected;
+  final Function() onTap;
+  final double width;
+
+  String get tileDuration {
+    return exercise.duration.minutesSeconds();
+  }
+
+  String get tileTitle {
+    return exercise.name +
+        '  ·  ' +
+        exercise.reps.pluralString('rep') +
+        ', ' +
+        exercise.sets.pluralString('set');
+  }
+
+  String get structString {
+    return exercise.reps.pluralString('rep') +
+        ', ' +
+        exercise.sets.pluralString('set');
+  }
+
+  String get tileSubtitle {
+    return exercise.ticTime.pluralString('sec') +
+        ' up, ' +
+        exercise.tocTime.pluralString('sec') +
+        ' down, ' +
+        exercise.secsRest.pluralString('sec') +
+        ' rest';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Theme.of(context).colorScheme.surface,
+      elevation: 1,
+      child: ListTile(
+        selected: selected,
+        tileColor: Colors.transparent,
+        selectedTileColor: Theme.of(context).focusColor.withOpacity(0.05),
+        onTap: onTap,
+        leading: leading,
+        trailing: Text(tileDuration,
+            style: Theme.of(context).textTheme.bodyText2.apply(
+                color:
+                    Theme.of(context).colorScheme.onSurface.withOpacity(.6))),
+        title:
+            Text(exercise.name, style: Theme.of(context).textTheme.subtitle1),
+        // subtitle: Text(tileDuration + '  ·  ' + structString,
+        //     style: Theme.of(context).textTheme.bodyText2.apply(
+        //         color:
+        //             Theme.of(context).colorScheme.onSurface.withOpacity(.6))),
+      ),
+    );
+  }
+}
+
 class DismissibleExerciseTile extends StatelessWidget {
   const DismissibleExerciseTile({
     Key key,
@@ -335,7 +406,7 @@ class DismissibleExerciseTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Dismissible(
       key: key,
-      child: ExerciseTile(
+      child: ExerciseTileSmall(
         exercise: exercise,
         leading: leading,
         trailing: trailing,
@@ -450,153 +521,147 @@ class _PlayCardState extends State<PlayCard> with TickerProviderStateMixin {
 
       return InkWell(
         onTap: widget.action,
-        child: Stack(
-          clipBehavior: Clip.hardEdge,
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(
-                  top: 12, bottom: 12, left: 16, right: 8),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          SizedBox(width: 40, height: 40),
-                          Padding(
-                            padding:
-                                const EdgeInsets.only(left: 16.0, right: 8),
-                            child: Container(
-                              // color: Colors.black,
-                              width: MediaQuery.of(context).size.width -
-                                  (16 + 40 + 16 + 8 + 48 * 3 + 8),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisSize: MainAxisSize.max,
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    (nowPlaying.exercise != null
-                                            ? nowPlaying.exercise.name
-                                            : 'No exercise') +
-                                        '  ·  ' +
-                                        (nowPlaying.inSet
-                                            ? nowPlaying.currentRep
-                                                .pluralString('rep')
-                                            : nowPlaying.inReady
-                                                ? 'Ready'
-                                                : nowPlaying.inRest
-                                                    ? 'Rest'
-                                                    : 'Done') +
-                                        (!nowPlaying.inEnd
-                                            ? ', ' +
-                                                nowPlaying.currentSet
-                                                    .cardinal() +
-                                                ' set'
-                                            : ', ' +
-                                                nowPlaying.currentSet
-                                                    .pluralString('set')),
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodyText1
-                                        .apply(
-                                            color: Theme.of(context)
-                                                .colorScheme
-                                                .onSurface),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  nowPlaying.plan != null &&
-                                          nowPlaying.plan.name != ''
-                                      ? Padding(
-                                          padding:
-                                              const EdgeInsets.only(top: 4.0),
-                                          child: Text(
-                                            nowPlaying.plan != null
-                                                ? nowPlaying.plan.name
-                                                : 'No plan',
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .bodyText1
-                                                .apply(
-                                                    fontWeightDelta: -1,
-                                                    color: Theme.of(context)
-                                                        .colorScheme
-                                                        .onBackground
-                                                        .withOpacity(.6)),
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        )
-                                      : SizedBox(height: 0),
-                                ],
-                              ),
+        child: SizedBox(
+          height: context.read<MenuProvider>().playCardHeight,
+          child: Stack(
+            clipBehavior: Clip.hardEdge,
+            alignment: AlignmentDirectional.center,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(
+                  left: 16,
+                  right: 4,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.max,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SizedBox(width: 40, height: 40),
+                        Padding(
+                          padding: const EdgeInsets.only(left: 16.0),
+                          child: Container(
+                            // color: Colors.black,
+                            width: MediaQuery.of(context).size.width -
+                                (16 + 40 + 16 + 8 + 48 * 3 + 8),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  (nowPlaying.exercise != null
+                                          ? nowPlaying.exercise.name
+                                          : 'No exercise') +
+                                      '  ·  ' +
+                                      (nowPlaying.inSet
+                                          ? nowPlaying.currentRep
+                                              .pluralString('rep')
+                                          : nowPlaying.inReady
+                                              ? 'Ready'
+                                              : nowPlaying.inRest
+                                                  ? 'Rest'
+                                                  : 'Done') +
+                                      (!nowPlaying.inEnd
+                                          ? ', ' +
+                                              nowPlaying.currentSet.cardinal() +
+                                              ' set'
+                                          : ', ' +
+                                              nowPlaying.currentSet
+                                                  .pluralString('set')),
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodyText1
+                                      .apply(
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onSurface),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                nowPlaying.plan != null &&
+                                        nowPlaying.plan.name != ''
+                                    ? Padding(
+                                        padding:
+                                            const EdgeInsets.only(top: 4.0),
+                                        child: Text(
+                                          nowPlaying.plan != null
+                                              ? nowPlaying.plan.name
+                                              : 'No plan',
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodyText1
+                                              .apply(
+                                                  fontWeightDelta: -1,
+                                                  color: Theme.of(context)
+                                                      .colorScheme
+                                                      .onBackground
+                                                      .withOpacity(.6)),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      )
+                                    : SizedBox(height: 0),
+                              ],
                             ),
                           ),
-                        ],
-                      ),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          provider.Consumer<Progress>(
-                            builder: (context, progress, child) => IconButton(
-                                splashRadius: 24,
-                                icon: Icon(Icons.skip_previous),
-                                onPressed: progress.time != 0
-                                    ? nowPlaying.skipPrevious
-                                    : null),
-                          ),
-                          IconButton(
+                        ),
+                      ],
+                    ),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        provider.Consumer<Progress>(
+                          builder: (context, progress, child) => IconButton(
+                              padding: EdgeInsets.all(12),
                               splashRadius: 24,
-                              icon: AnimatedIcon(
-                                progress: playStateController,
-                                icon: AnimatedIcons.play_pause,
-                              ),
-                              disabledColor: Color.alphaBlend(
-                                  Theme.of(context).disabledColor,
-                                  Theme.of(context).colorScheme.surface),
-                              color: Color.alphaBlend(
-                                  Theme.of(context).iconTheme.color,
-                                  Theme.of(context).colorScheme.surface),
-                              onPressed: !nowPlaying.empty && !nowPlaying.ended
-                                  ? nowPlaying.togglePlay
+                              icon: Icon(Icons.skip_previous),
+                              onPressed: progress.time != 0
+                                  ? nowPlaying.skipPrevious
                                   : null),
-                          IconButton(
-                              splashRadius: 24,
-                              icon: Icon(Icons.skip_next),
-                              onPressed: !nowPlaying.empty && !nowPlaying.ended
-                                  ? nowPlaying.skipNext
-                                  : null)
-                        ],
-                      ),
-                    ],
-                  ),
-                ],
+                        ),
+                        IconButton(
+                            padding: EdgeInsets.all(12),
+                            splashRadius: 24,
+                            icon: AnimatedIcon(
+                              progress: playStateController,
+                              icon: AnimatedIcons.play_pause,
+                            ),
+                            disabledColor: Color.alphaBlend(
+                                Theme.of(context).disabledColor,
+                                Theme.of(context).colorScheme.surface),
+                            color: Color.alphaBlend(
+                                Theme.of(context).iconTheme.color,
+                                Theme.of(context).colorScheme.surface),
+                            onPressed: !nowPlaying.empty && !nowPlaying.ended
+                                ? nowPlaying.togglePlay
+                                : null),
+                        IconButton(
+                            padding: EdgeInsets.all(12),
+                            splashRadius: 24,
+                            icon: Icon(Icons.skip_next),
+                            onPressed: !nowPlaying.empty && !nowPlaying.ended
+                                ? nowPlaying.skipNext
+                                : null)
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ),
-            Container(
-              height: 72,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                mainAxisSize: MainAxisSize.max,
-                children: [
-                  provider.Consumer<Progress>(
+              Positioned(
+                top: 0,
+                child: SizedBox(
+                  width: MediaQuery.of(context).size.width,
+                  child: provider.Consumer<Progress>(
                     builder: (context, progress, child) =>
                         buildLinearPercentIndicator(
                             context, progress.percent, !nowPlaying.playing),
                   ),
-                  // Divider(
-                  //   color:
-                  //       Theme.of(context).colorScheme.onSurface.withOpacity(.2),
-                  //   height: .5,
-                  // ),
-                ],
-              ),
-            )
-          ],
+                ),
+              )
+            ],
+          ),
         ),
       );
     });
@@ -942,6 +1007,7 @@ class ExpandableSheet extends StatefulWidget {
     @required this.showController,
     this.onDismiss,
     this.builder,
+    this.detectGestures = true,
   })  : this.showHeight =
             Tween<double>(begin: 0, end: initialHeight).animate(showController),
         this.opacity = Tween<double>(begin: 0, end: 0.32).animate(
@@ -969,6 +1035,8 @@ class ExpandableSheet extends StatefulWidget {
 
   final Animation<double> showHeight;
   final Animation<double> opacity;
+
+  final bool detectGestures;
 
   @override
   _ExpandableSheetState createState() => _ExpandableSheetState();
@@ -1078,7 +1146,17 @@ class _ExpandableSheetState extends State<ExpandableSheet> {
                       top: MediaQuery.of(context).size.height -
                           bottom -
                           height.value,
-                      child: child,
+                      child: Opacity(
+                        opacity: Tween<double>(begin: 0, end: 1)
+                            .animate(
+                              CurvedAnimation(
+                                parent: widget.showController,
+                                curve: Interval(0, 0.2),
+                              ),
+                            )
+                            .value,
+                        child: child,
+                      ),
                     );
                   },
                   child: GestureDetector(
@@ -1088,57 +1166,61 @@ class _ExpandableSheetState extends State<ExpandableSheet> {
                         widget.controller.fling();
                     },
                     onVerticalDragUpdate: (details) {
-                      final newValue = widget.controller.value -
-                          details.primaryDelta / deltaHeight;
-                      if (!triedToDismiss && newValue >= 0 && newValue <= 1) {
-                        widget.controller.value = newValue;
-                      } else if (newValue < 0 &&
-                          widget.controller.isDismissed) {
-                        final newShowValue = widget.showController.value -
-                            details.primaryDelta / widget.initialHeight;
-                        if (newShowValue >= 0 && newShowValue <= 1) {
-                          widget.showController.value = newShowValue;
-                          setState(() {
-                            triedToDismiss = true;
-                          });
+                      if (widget.detectGestures) {
+                        final newValue = widget.controller.value -
+                            details.primaryDelta / deltaHeight;
+                        if (!triedToDismiss && newValue >= 0 && newValue <= 1) {
+                          widget.controller.value = newValue;
+                        } else if (newValue < 0 &&
+                            widget.controller.isDismissed) {
+                          final newShowValue = widget.showController.value -
+                              details.primaryDelta / widget.initialHeight;
+                          if (newShowValue >= 0 && newShowValue <= 1) {
+                            widget.showController.value = newShowValue;
+                            setState(() {
+                              triedToDismiss = true;
+                            });
+                          }
                         }
                       }
                     },
                     onVerticalDragEnd: (details) {
-                      if (triedToDismiss) {
-                        setState(() {
-                          triedToDismiss = false;
-                        });
-                        if (widget.showController.value < 0.85) {
-                          widget.showController.fling(velocity: -1).then((_) {
-                            if (widget.onDismiss != null) widget.onDismiss();
+                      if (widget.detectGestures) {
+                        if (triedToDismiss) {
+                          setState(() {
+                            triedToDismiss = false;
                           });
-                        } else {
-                          widget.showController.fling();
+                          if (widget.showController.value < 0.85) {
+                            widget.showController.fling(velocity: -1).then((_) {
+                              if (widget.onDismiss != null) widget.onDismiss();
+                            });
+                          } else {
+                            widget.showController.fling();
+                          }
                         }
+
+                        final threshold = 2.0;
+                        final velocity =
+                            -details.velocity.pixelsPerSecond.dy / deltaHeight;
+
+                        final velocityCheck = velocity.abs() >= threshold;
+                        final positionCheck =
+                            (fromStart && widget.controller.value > 0.5) ||
+                                (!fromStart && widget.controller.value < 0.5);
+
+                        print('Velocity is high enough: ' +
+                            velocityCheck.toString());
+                        print('Position is high enough: ' +
+                            positionCheck.toString());
+                        print('Coming from start: ' + fromStart.toString());
+
+                        if (velocityCheck)
+                          widget.controller.fling(velocity: velocity);
+                        else if (positionCheck)
+                          widget.controller.fling(velocity: fromStart ? 1 : -1);
+                        else
+                          widget.controller.fling(velocity: fromStart ? -1 : 1);
                       }
-
-                      final threshold = 2.0;
-                      final velocity =
-                          -details.velocity.pixelsPerSecond.dy / deltaHeight;
-
-                      final velocityCheck = velocity.abs() >= threshold;
-                      final positionCheck =
-                          (fromStart && widget.controller.value > 0.5) ||
-                              (!fromStart && widget.controller.value < 0.5);
-
-                      print('Velocity is high enough: ' +
-                          velocityCheck.toString());
-                      print('Position is high enough: ' +
-                          positionCheck.toString());
-                      print('Coming from start: ' + fromStart.toString());
-
-                      if (velocityCheck)
-                        widget.controller.fling(velocity: velocity);
-                      else if (positionCheck)
-                        widget.controller.fling(velocity: fromStart ? 1 : -1);
-                      else
-                        widget.controller.fling(velocity: fromStart ? -1 : 1);
                     },
                     child: SizedBox(
                       height: height.value,
