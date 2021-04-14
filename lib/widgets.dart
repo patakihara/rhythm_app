@@ -1067,21 +1067,11 @@ class _ExpandableSheetState extends State<ExpandableSheet> {
                 return AnimatedBuilder(
                   animation: widget.showController,
                   builder: (context, child) {
-                    Animation<double> top2 = Tween<double>(
-                            begin: actualConstraints.maxHeight -
-                                widget.initialHeight,
-                            end: 0)
-                        .animate(widget.controller);
-
-                    Animation<double> top3 =
-                        Tween<double>(begin: widget.initialHeight, end: 0)
-                            .animate(widget.showController);
-
                     return Positioned(
-                      top: top2.value + top3.value,
-                      // !widget.showController.isCompleted
-                      //     ? top1.value
-                      //     : top2.value,
+                      bottom: Tween<double>(begin: -1, end: 0)
+                              .animate(widget.showController)
+                              .value *
+                          height.value,
                       child: child,
                     );
                   },
