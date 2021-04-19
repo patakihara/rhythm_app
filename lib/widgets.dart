@@ -1027,6 +1027,7 @@ class ExpandableSheet extends StatefulWidget {
     this.onDismiss,
     this.builder,
     this.detectGestures = true,
+    Future<void> Function() onWillPop,
   })  : this.showHeight =
             Tween<double>(begin: 0, end: initialHeight).animate(showController),
         this.opacity = Tween<double>(begin: 0, end: 0.32).animate(
@@ -1039,6 +1040,7 @@ class ExpandableSheet extends StatefulWidget {
             ),
           ),
         ),
+        this.onWillPop = onWillPop,
         super(key: key);
 
   final Widget child;
@@ -1056,6 +1058,7 @@ class ExpandableSheet extends StatefulWidget {
   final Animation<double> opacity;
 
   final bool detectGestures;
+  final Future<void> Function() onWillPop;
 
   @override
   _ExpandableSheetState createState() => _ExpandableSheetState();
@@ -1117,14 +1120,15 @@ class _ExpandableSheetState extends State<ExpandableSheet> {
     ).animate(widget.controller);
 
     return WillPopScope(
-      onWillPop: () async {
-        if (widget.controller.isDismissed)
-          return true;
-        else {
-          widget.controller.fling(velocity: -1);
-          return false;
-        }
-      },
+      onWillPop: widget.onWillPop ??
+          () async {
+            if (widget.controller.isDismissed)
+              return true;
+            else {
+              widget.controller.fling(velocity: -1);
+              return false;
+            }
+          },
       child: SizedBox.expand(
         child: Stack(
           alignment: AlignmentDirectional.bottomCenter,
